@@ -50,6 +50,6 @@ class User extends Authenticatable implements FilamentUser, HasName
 
     public function getFilamentName(): string
     {
-        return $this->username ?: ('User#'.$this->id);
+        return $this->email ?: ('User#'.$this->id);
     }
 }

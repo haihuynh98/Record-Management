@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Spatie\Permission\Models\Role;
 
 class UserResource extends Resource
 {
@@ -30,13 +31,18 @@ class UserResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('username')
+                    ->label('Tên người dùng')
                     ->required()
-                    ->maxLength(100),
+                    ->maxLength(100)
+                    ->unique(ignoreRecord: true),
                 Forms\Components\TextInput::make('email')
-                    ->email()
+                    ->label('Tên đăng nhập')
                     ->required()
-                    ->maxLength(100),
+                    ->maxLength(100)
+                    ->unique(ignoreRecord: true)
+                    ->helperText('Dùng để đăng nhập vào hệ thống'),
                 Forms\Components\TextInput::make('password')
+                    ->label('Mật khẩu')
                     ->password()
                     ->revealable()
                     ->required(fn (string $context) => $context === 'create')
@@ -45,23 +51,20 @@ class UserResource extends Resource
                     ->dehydrated(fn ($state) => filled($state)),
                 Forms\Components\Select::make('roles')
                     ->label('Vai trò')
-                    ->relationship(
-                        name: 'roles',
-                        titleAttribute: 'name',
-                        modifyQueryUsing: function (Builder $query) {
-                            $user = auth()->user();
-
-                            if ($user?->hasRole('super_admin')) {
-                                return $query;
-                            }
-
-                            if ($user?->hasRole('admin')) {
-                                return $query->where('name', '!=', 'super_admin');
-                            }
-
-                            return $query->whereRaw('1=0');
-                        }
-                    )
+                    ->options(function () {
+                        return Role::where('name', '!=', 'super_admin')
+                            ->pluck('name', 'id')
+                            ->map(function ($roleName) {
+                                // Map role names to Vietnamese labels
+                                $labels = [
+                                    'admin' => 'Quản trị viên',
+                                    'approver' => 'Người phê duyệt',
+                                    'creator' => 'Người tạo',
+                                ];
+                                return $labels[$roleName] ?? $roleName;
+                            });
+                    })
+                    ->multiple()
                     ->preload()
                     ->searchable()
                     ->visible(fn () => auth()->user()?->hasAnyRole(['super_admin', 'admin']))
@@ -74,15 +77,31 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('username')
+                    ->label('Tên người dùng')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
+                    ->label('Tên đăng nhập')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('roles.name')
+                    ->label('Vai trò')
+                    ->badge()
+                    ->formatStateUsing(function ($state) {
+                        $labels = [
+                            'admin' => 'Quản trị viên',
+                            'approver' => 'Người phê duyệt',
+                            'creator' => 'Người tạo',
+                            'super_admin' => 'Super Admin',
+                        ];
+                        return $labels[$state] ?? $state;
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Ngày tạo')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Ngày cập nhật')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
