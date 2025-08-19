@@ -38,13 +38,17 @@ class ProfileResource extends Resource
                     ->label('Mã hồ sơ')
                     ->required()
                     ->unique(ignoreRecord: true, table: Profile::class, column: 'code')
-                    ->disabled(function (Profile $record) {
+                    ->disabled(function () {
                         $user = auth()->user();
                         if ($user?->hasRole('admin') || $user?->hasRole('super_admin') || $user?->hasRole('creator')) {
                             return false;
                         }
                         return true;
                     })
+                    ->rules(['alpha_num'])
+                    ->validationMessages([
+                        'alpha_num' => 'Chỉ cho phép ký tự 0-9, a-z, A-Z (không khoảng trắng/ký tự đặc biệt).',
+                    ])
                     ->maxLength(64),
             ]);
     }

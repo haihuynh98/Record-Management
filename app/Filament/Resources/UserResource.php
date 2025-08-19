@@ -31,11 +31,11 @@ class UserResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('username')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(100),
                 Forms\Components\TextInput::make('email')
                     ->email()
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(100),
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->revealable()
@@ -48,6 +48,19 @@ class UserResource extends Resource
                     ->relationship(
                         name: 'roles',
                         titleAttribute: 'name',
+                        modifyQueryUsing: function (Builder $query) {
+                            $user = auth()->user();
+
+                            if ($user?->hasRole('super_admin')) {
+                                return $query;
+                            }
+
+                            if ($user?->hasRole('admin')) {
+                                return $query->where('name', '!=', 'super_admin');
+                            }
+
+                            return $query->whereRaw('1=0');
+                        }
                     )
                     ->preload()
                     ->searchable()

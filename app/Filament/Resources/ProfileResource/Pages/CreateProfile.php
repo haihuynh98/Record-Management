@@ -13,6 +13,7 @@ class CreateProfile extends CreateRecord
     public function getTitle(): string { return 'Tạo mới hồ sơ'; }
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $data['code'] = preg_replace('/[^A-Za-z0-9]/', '', preg_replace('/\s+/', '', (string) $data['code']));
         $data['created_by'] = auth()->id();
         return $data;
     }

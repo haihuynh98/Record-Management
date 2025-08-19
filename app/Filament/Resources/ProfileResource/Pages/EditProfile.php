@@ -18,6 +18,14 @@ class EditProfile extends EditRecord
     {
         return 'Chỉnh sửa hồ sơ';
     }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (isset($data['code'])) {
+            $data['code'] = preg_replace('/[^A-Za-z0-9]/', '', preg_replace('/\s+/', '', (string) $data['code']));
+        }
+        return $data;
+    }
     protected function getHeaderActions(): array
     {
         return [
