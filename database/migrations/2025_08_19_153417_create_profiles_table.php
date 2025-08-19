@@ -15,8 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('code')->unique();
             $table->tinyInteger('created_by')->constrained('users');
-            $table->tinyInteger('approved_by')->constrained('users');
+            $table->tinyInteger('approved_by')->constrained('users')->nullable();
             $table->timestamp('approved_at')->nullable();
+            $table->boolean('status')->default(0);
             $table->timestamps();
         });
     }

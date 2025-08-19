@@ -9,8 +9,8 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
-
-class User extends Authenticatable implements FilamentUser
+use Filament\Models\Contracts\HasName;
+class User extends Authenticatable implements FilamentUser, HasName
 {
     use HasFactory, Notifiable, HasRoles;
 
@@ -46,5 +46,10 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         return true;
+    }
+
+    public function getFilamentName(): string
+    {
+        return $this->username ?: ('User#'.$this->id);
     }
 }
