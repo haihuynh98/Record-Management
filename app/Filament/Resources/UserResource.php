@@ -49,6 +49,10 @@ class UserResource extends Resource
                     ->hidden(fn (string $context) => $context === 'edit')
                     ->dehydrateStateUsing(fn ($state) => filled($state) ? \Illuminate\Support\Facades\Hash::make($state) : null)
                     ->dehydrated(fn ($state) => filled($state)),
+                Forms\Components\Toggle::make('is_priority')
+                    ->label('Người dùng ưu tiên')
+                    ->helperText('Đánh dấu người dùng này là ưu tiên')
+                    ->default(false),
                 Forms\Components\Select::make('roles')
                     ->label('Vai trò')
                     ->options(function () {
@@ -82,6 +86,13 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->label('Tên đăng nhập')
                     ->searchable(),
+                Tables\Columns\IconColumn::make('is_priority')
+                    ->label('Ưu tiên')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-star')
+                    ->falseIcon('heroicon-o-star')
+                    ->trueColor('warning')
+                    ->falseColor('gray'),
                 Tables\Columns\TextColumn::make('roles.name')
                     ->label('Vai trò')
                     ->badge()
