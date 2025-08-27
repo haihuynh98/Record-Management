@@ -54,4 +54,9 @@ class User extends Authenticatable implements FilamentUser, HasName
     {
         return $this->email ?: ('User#'.$this->id);
     }
+
+    public function profiles()
+    {
+        return $this->hasMany(Profile::class, 'created_by');
+    }
 }

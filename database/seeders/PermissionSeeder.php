@@ -50,18 +50,23 @@ class PermissionSeeder extends Seeder
             'delete_any_role',
         ];
 
-        $allPermissions = array_merge($profilePermissions, $userPermissions, $rolePermissions);
+        // Create permissions for Profile Statistics Page
+        $profileStatisticsPermissions = [
+            'view_profile_statistics',
+        ];
+
+        $allPermissions = array_merge($profilePermissions, $userPermissions, $rolePermissions, $profileStatisticsPermissions);
 
         foreach ($allPermissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
         // Create roles and assign permissions
-        $superAdmin = Role::create(['name' => 'super_admin']);
-        $superAdmin->givePermissionTo($allPermissions);
+        $superAdmin = Role::firstOrCreate(['name' => 'super_admin']);
+        $superAdmin->syncPermissions($allPermissions);
 
-        $admin = Role::create(['name' => 'admin']);
-        $admin->givePermissionTo([
+        $admin = Role::firstOrCreate(['name' => 'admin']);
+        $admin->syncPermissions([
             // Profile permissions
             'view_profile',
             'view_any_profile',
@@ -85,9 +90,11 @@ class PermissionSeeder extends Seeder
             'update_role',
             'delete_role',
             'delete_any_role',
+            // Profile Statistics permissions
+            'view_profile_statistics',
         ]);
 
-        $approver = Role::create(['name' => 'approver']);
+        $approver = Role::firstOrCreate(['name' => 'approver']);
         $approver->givePermissionTo([
             'view_profile',
             'view_any_profile',
@@ -95,7 +102,7 @@ class PermissionSeeder extends Seeder
             'reject_profile',
         ]);
 
-        $creator = Role::create(['name' => 'creator']);
+        $creator = Role::firstOrCreate(['name' => 'creator']);
         $creator->givePermissionTo([
             'view_profile',
             'view_any_profile',
