@@ -49,10 +49,6 @@ class UserResource extends Resource
                     ->hidden(fn (string $context) => $context === 'edit')
                     ->dehydrateStateUsing(fn ($state) => filled($state) ? \Illuminate\Support\Facades\Hash::make($state) : null)
                     ->dehydrated(fn ($state) => filled($state)),
-                Forms\Components\Toggle::make('is_priority')
-                    ->label('Người dùng ưu tiên')
-                    ->helperText('Đánh dấu người dùng này là ưu tiên')
-                    ->default(false),
                 Forms\Components\Select::make('roles')
                     ->label('Vai trò')
                     ->options(function () {
@@ -68,11 +64,25 @@ class UserResource extends Resource
                                 return $labels[$roleName] ?? $roleName;
                             });
                     })
-                    ->multiple()
+                    ->reactive()
                     ->preload()
                     ->searchable()
                     ->visible(fn () => auth()->user()?->hasAnyRole(['super_admin', 'admin']))
-                    ->required(fn () => auth()->user()?->hasAnyRole(['super_admin', 'admin'])),
+                    ->required(fn () => auth()->user()?->hasAnyRole(['super_admin', 'admin']))
+                    ->live(),
+                Forms\Components\Toggle::make('is_priority')
+                    ->label('Người dùng ưu tiên')
+                    ->helperText('Đánh dấu người dùng này là ưu tiên')
+                    ->default(false)
+                    ->visible(function (Forms\Get $get) {
+                        $selectedRoles = $get('roles');
+                        
+                        if (!$selectedRoles) return false;
+                        // Check if any selected role is 'creator'
+                        $creatorRole = \Spatie\Permission\Models\Role::where('name', 'creator')->first();
+
+                        return $creatorRole && $creatorRole->id == $selectedRoles;
+                    }),
             ]);
     }
 
@@ -82,7 +92,13 @@ class UserResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('username')
                     ->label('Tên người dùng')
-                    ->searchable(),
+                    ->searchable()
+                    ->formatStateUsing(function ($state, $record) {
+                        if ($record && $record->roles->contains('name', 'creator') && $record->is_priority) {
+                            return $state . ' ⭐';
+                        }
+                        return $state;
+                    }),
                 Tables\Columns\TextColumn::make('email')
                     ->label('Tên đăng nhập')
                     ->searchable(),
@@ -92,7 +108,17 @@ class UserResource extends Resource
                     ->trueIcon('heroicon-o-star')
                     ->falseIcon('heroicon-o-star')
                     ->trueColor('warning')
-                    ->falseColor('gray'),
+                    ->falseColor('gray')
+                    ->visible(function ($record) {
+                        return $record && $record->roles->contains('name', 'creator');
+                    })
+                    ->getStateUsing(function ($record) {
+                        // Only show star if user has creator role AND is_priority is true
+                        if ($record && $record->roles->contains('name', 'creator') && $record->is_priority) {
+                            return true;
+                        }
+                        return false;
+                    }),
                 Tables\Columns\TextColumn::make('roles.name')
                     ->label('Vai trò')
                     ->badge()

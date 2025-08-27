@@ -12,10 +12,17 @@ class Profile extends Model
     protected $table = 'profiles';
     protected $fillable = [
         'code',
+        'amount',
+        'rejection_reason',
         'created_by',
         'approved_by',
         'approved_at',
         'status',
+    ];
+
+    protected $casts = [
+        'amount' => 'integer',
+        'status' => 'integer',
     ];
 
     public function approvedBy(){
