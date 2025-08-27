@@ -55,7 +55,12 @@ class PermissionSeeder extends Seeder
             'view_profile_statistics',
         ];
 
-        $allPermissions = array_merge($profilePermissions, $userPermissions, $rolePermissions, $profileStatisticsPermissions);
+        // Create permissions for Dashboard Charts
+        $dashboardChartPermissions = [
+            'view_dashboard_charts',
+        ];
+
+        $allPermissions = array_merge($profilePermissions, $userPermissions, $rolePermissions, $profileStatisticsPermissions, $dashboardChartPermissions);
 
         foreach ($allPermissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
@@ -92,6 +97,8 @@ class PermissionSeeder extends Seeder
             'delete_any_role',
             // Profile Statistics permissions
             'view_profile_statistics',
+            // Dashboard Charts permissions
+            'view_dashboard_charts',
         ]);
 
         $approver = Role::firstOrCreate(['name' => 'approver']);
