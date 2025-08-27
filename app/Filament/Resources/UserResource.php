@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Spatie\Permission\Models\Role;
 
-class UserResource extends Resource
+class UserResource extends Resource implements HasShieldPermissions
 {
     protected static ?string $model = User::class;
     protected static ?int $navigationSort = 2;
@@ -25,6 +26,18 @@ class UserResource extends Resource
     protected static ?string $navigationLabel = 'Người dùng';
     protected static ?string $pluralModelLabel = 'Người dùng';
     protected static ?string $modelLabel = 'Người dùng';
+
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
 
     public static function form(Form $form): Form
     {
@@ -64,11 +77,11 @@ class UserResource extends Resource
                                 return $labels[$roleName] ?? $roleName;
                             });
                     })
-                    ->reactive()
+                    ->multiple()
                     ->preload()
                     ->searchable()
-                    ->visible(fn () => auth()->user()?->hasAnyRole(['super_admin', 'admin']))
-                    ->required(fn () => auth()->user()?->hasAnyRole(['super_admin', 'admin']))
+                    ->visible(fn () => auth()->user()?->hasPermissionTo('update_user'))
+                    ->required(fn () => auth()->user()?->hasPermissionTo('update_user'))
                     ->live(),
                 Forms\Components\Toggle::make('is_priority')
                     ->label('Người dùng ưu tiên')
@@ -78,9 +91,14 @@ class UserResource extends Resource
                         $selectedRoles = $get('roles');
                         
                         if (!$selectedRoles) return false;
+                        
                         // Check if any selected role is 'creator'
                         $creatorRole = \Spatie\Permission\Models\Role::where('name', 'creator')->first();
-
+                        
+                        if (is_array($selectedRoles)) {
+                            return $creatorRole && in_array($creatorRole->id, $selectedRoles);
+                        }
+                        
                         return $creatorRole && $creatorRole->id == $selectedRoles;
                     }),
             ]);
@@ -150,7 +168,8 @@ class UserResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn () => auth()->user()?->hasPermissionTo('delete_any_user')),
                 ]),
             ]);
     }

@@ -38,15 +38,18 @@ class EditProfile extends EditRecord
         $record = $this->getRecord();
         
         // Kiểm tra quyền duyệt
-        $canApprove = $user && ($user->hasRole('approver') || $user->hasRole('admin') || $user->hasRole('super_admin'));
+        $canApprove = $user && $user->can('approve', $record);
         $canShowApproveActions = $record && $record->status === 0; // Chỉ hiển thị cho hồ sơ chờ duyệt
         
+        // Kiểm tra quyền từ chối
+        $canReject = $user && $user->can('reject', $record);
+        
         // Kiểm tra quyền nộp lại
-        $canResubmit = $user && $user->hasRole('creator') && $record && $record->status === 2 && $record->created_by === $user->id;
+        $canResubmit = $user && $user->can('resubmit', $record) && $record && $record->status === 2 && $record->created_by === $user->id;
         
         $actions = [];
         
-        // Thêm nút duyệt/từ chối nếu có quyền
+        // Thêm nút duyệt nếu có quyền
         if ($canApprove && $canShowApproveActions) {
             $actions[] = Actions\Action::make('approve')
                 ->label('Duyệt')
@@ -73,7 +76,10 @@ class EditProfile extends EditRecord
 
                     $this->redirect(static::getResource()::getUrl('index'));
                 });
-
+        }
+        
+        // Thêm nút từ chối nếu có quyền
+        if ($canReject && $canShowApproveActions) {
             $actions[] = Actions\Action::make('reject')
                 ->label('Từ chối')
                 ->color('danger')

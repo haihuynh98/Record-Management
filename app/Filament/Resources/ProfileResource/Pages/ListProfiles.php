@@ -13,7 +13,9 @@ class ListProfiles extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()->label('Tạo hồ sơ mới'),
+            Actions\CreateAction::make()
+                ->label('Tạo hồ sơ mới')
+                ->visible(fn () => auth()->user()?->hasPermissionTo('create_profile')),
         ];
     }
 }

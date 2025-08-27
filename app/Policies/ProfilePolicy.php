@@ -63,7 +63,7 @@ class ProfilePolicy
      */
     public function forceDelete(User $user, Profile $profile): bool
     {
-        return $user->can('force_delete_profile');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class ProfilePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_profile');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class ProfilePolicy
      */
     public function restore(User $user, Profile $profile): bool
     {
-        return $user->can('restore_profile');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class ProfilePolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_profile');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class ProfilePolicy
      */
     public function replicate(User $user, Profile $profile): bool
     {
-        return $user->can('replicate_profile');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,32 @@ class ProfilePolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_profile');
+        return $user->can('{{ Reorder }}');
+    }
+
+    /**
+     * Determine whether the user can approve the profile.
+     */
+    public function approve(User $user, Profile $profile): bool
+    {
+        return $user->hasPermissionTo('approve_profile') && $profile->status === 0;
+    }
+
+    /**
+     * Determine whether the user can reject the profile.
+     */
+    public function reject(User $user, Profile $profile): bool
+    {
+        return $user->hasPermissionTo('reject_profile') && $profile->status === 0;
+    }
+
+    /**
+     * Determine whether the user can resubmit the profile.
+     */
+    public function resubmit(User $user, Profile $profile): bool
+    {
+        return $user->hasPermissionTo('resubmit_profile') && 
+               $profile->status === 2 && 
+               $profile->created_by === $user->id;
     }
 }

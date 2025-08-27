@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ProfileResource\Pages;
 use App\Filament\Resources\ProfileResource\RelationManagers;
 use App\Models\Profile;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -15,11 +16,11 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Schema;
-use Filament\Tables\Actions\Action;
+
 use Filament\Tables\Actions\EditAction;
 use Filament\Support\RawJs;
 
-class ProfileResource extends Resource
+class ProfileResource extends Resource implements HasShieldPermissions
 {
     protected static ?string $model = Profile::class;
     protected static ?int $navigationSort = 1;
@@ -30,6 +31,21 @@ class ProfileResource extends Resource
     protected static ?string $navigationLabel = 'Hồ sơ';
     protected static ?string $pluralModelLabel = 'Hồ sơ';
     protected static ?string $modelLabel = 'Hồ sơ';
+
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+            'approve',
+            'reject',
+            'resubmit',
+        ];
+    }
 
     public static function form(Form $form): Form
     {
@@ -46,7 +62,7 @@ class ProfileResource extends Resource
                         }
                         
                         $user = auth()->user();
-                        if ($user?->hasRole('admin') || $user?->hasRole('super_admin') || $user?->hasRole('creator')) {
+                        if ($user?->hasPermissionTo('create_profile')) {
                             return false;
                         }
                         return true;
@@ -88,8 +104,8 @@ class ProfileResource extends Resource
                 $user = auth()->user();
 
                 $canEdit = $user && (
-                        $user->hasAnyRole(['admin','super_admin'])
-                        || ($user->hasRole('creator') && $record->created_by === $user->id)
+                        $user->can('update', $record)
+                        || ($user->hasPermissionTo('update_profile') && $record->created_by === $user->id)
                     );
 
                 return ($canEdit)
@@ -141,18 +157,14 @@ class ProfileResource extends Resource
                 //
             ])
             ->actions([
-                Action::make('approve')
+                \Filament\Tables\Actions\Action::make('approve')
                     ->label('Duyệt')
                     ->icon('heroicon-m-check')
                     ->color('success')
                     ->requiresConfirmation()
                     ->visible(function (Profile $record) {
                         $user = auth()->user();
-                        if (!$user?->hasRole('approver') && !$user?->hasRole('admin') && !$user?->hasRole('super_admin')) {
-                            return false;
-                        }
-
-                        return $record->status === 0; // Chỉ hiển thị cho hồ sơ chờ duyệt
+                        return $user?->hasPermissionTo('approve_profile') && $record->status === 0;
                     })
                     ->action(function (Profile $record) {
                         $user = auth()->user();
@@ -168,19 +180,67 @@ class ProfileResource extends Resource
                             ->success()
                             ->send();
                     }),
+                \Filament\Tables\Actions\Action::make('reject')
+                    ->label('Từ chối')
+                    ->icon('heroicon-m-x-mark')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(function (Profile $record) {
+                        $user = auth()->user();
+                        return $user?->hasPermissionTo('reject_profile') && $record->status === 0;
+                    })
+                    ->form([
+                        Forms\Components\Textarea::make('rejection_reason')
+                            ->label('Lý do từ chối')
+                            ->required()
+                            ->placeholder('Nhập lý do từ chối hồ sơ...')
+                            ->minLength(10)
+                            ->maxLength(500),
+                    ])
+                    ->action(function (Profile $record, array $data) {
+                        $user = auth()->user();
+                        
+                        $record->update([
+                            'status' => 2, // Từ chối
+                            'rejection_reason' => $data['rejection_reason'],
+                            'approved_at' => now(),
+                            'approved_by' => $user->id,
+                        ]);
+
+                        Notification::make()
+                            ->title('Đã từ chối hồ sơ')
+                            ->success()
+                            ->send();
+                    }),
+                \Filament\Tables\Actions\Action::make('resubmit')
+                    ->label('Nộp lại')
+                    ->icon('heroicon-m-arrow-path')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->visible(function (Profile $record) {
+                        $user = auth()->user();
+                        return $user?->hasPermissionTo('resubmit_profile') && $record->status === 2 && $record->created_by === $user->id;
+                    })
+                    ->action(function (Profile $record) {
+                        $record->update([
+                            'status' => 0, // Chờ duyệt
+                            'rejection_reason' => null, // Xóa lý do từ chối
+                        ]);
+
+                        Notification::make()
+                            ->title('Đã nộp lại hồ sơ thành công')
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\EditAction::make()
                     ->visible(function (Profile $record) {
                         $user = auth()->user();
-                        if ($user?->hasRole('admin') || $user?->hasRole('super_admin')) {
+                        if ($user?->can('update', $record)) {
                             return $record->status === 0; // Chỉ cho phép edit hồ sơ chờ duyệt
                         }
 
-                        if ($user?->hasRole('approver')) {
-                            return false;
-                        }
-
-                        if ($user?->hasRole('creator')) {
-                            return $record->status === 0 && $record->created_by === $user->id;
+                        if ($user?->hasPermissionTo('update_profile') && $record->created_by === $user->id) {
+                            return $record->status === 0;
                         }
 
                         return false;
@@ -201,14 +261,17 @@ class ProfileResource extends Resource
 
         if (!$user) return $query->whereRaw('1=0');
 
-        if ($user->hasRole('admin') || $user->hasRole('super_admin')) return $query;
+        // Super admin và admin có thể xem tất cả
+        if ($user->hasRole('super_admin') || $user->hasRole('admin')) return $query;
 
+        // Người tạo chỉ xem hồ sơ của mình
         if ($user->hasRole('creator')) {
             return $query->where('created_by', $user->id);
         }
 
+        // Người duyệt chỉ xem hồ sơ chờ duyệt
         if ($user->hasRole('approver')) {
-            return $query->where('status', 0); // Chỉ hiển thị hồ sơ chờ duyệt
+            return $query->where('status', 0);
         }
 
         return $query->whereRaw('1=0');

@@ -18,6 +18,7 @@ class CreateUser extends CreateRecord
     {
         // Gán roles cho user mới tạo
         $selectedRoles = $this->form->getState()['roles'] ?? [];
+        
         if (!empty($selectedRoles)) {
             $roles = Role::whereIn('id', $selectedRoles)->pluck('name');
             $this->record->syncRoles($roles);
