@@ -55,6 +55,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->label('Mã hồ sơ')
                     ->required()
                     ->unique(ignoreRecord: true, table: Profile::class, column: 'code')
+                    ->prefix('#')
                     ->disabled(function (string $context) {
                         // Disable trong màn hình edit
                         if ($context === 'edit') {
@@ -105,6 +106,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
             ->defaultSort('created_at', 'desc')
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(50)
+            ->poll('5s')
+
             ->recordUrl(function (Profile $record): ?string {
                 $user = auth()->user();
 
@@ -120,7 +123,12 @@ class ProfileResource extends Resource implements HasShieldPermissions
             ->columns([
                 Tables\Columns\TextColumn::make('code')
                     ->label('Mã hồ sơ')
-                    ->searchable(),
+                    ->formatStateUsing(fn (string $state): string => "#{$state}")
+                    ->searchable()
+                    ->copyable()
+                    ->copyableState(fn (string $state): string => "#{$state}")
+                    ->copyMessage('Đã sao chép mã hồ sơ vào clipboard')
+                    ->copyMessageDuration(1500),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Giá trị hồ sơ')
                     ->money(currency: 'VND')
