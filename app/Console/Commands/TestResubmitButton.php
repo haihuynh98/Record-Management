@@ -59,7 +59,7 @@ class TestResubmitButton extends Command
             $profiles->map(function ($profile) use ($user) {
                 $hasPermission = $user->hasPermissionTo('resubmit_profile');
                 $isRejected = $profile->status === 2;
-                $isCreator = $profile->created_by === $user->id;
+                $isCreator = $profile->created_by == $user->id; // Use loose comparison
                 $isAdmin = $user->hasRole(['admin', 'super_admin']);
                 $shouldShow = $hasPermission && $isRejected && ($isCreator || $isAdmin);
 
@@ -86,7 +86,7 @@ class TestResubmitButton extends Command
                 $rejectedProfiles->map(function ($profile) use ($user) {
                     $creator = User::find($profile->created_by);
                     $hasPermission = $user->hasPermissionTo('resubmit_profile');
-                    $isCreator = $profile->created_by === $user->id;
+                    $isCreator = $profile->created_by == $user->id; // Use loose comparison
                     $isAdmin = $user->hasRole(['admin', 'super_admin']);
                     $shouldShow = $hasPermission && ($isCreator || $isAdmin);
 

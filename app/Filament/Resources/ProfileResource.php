@@ -243,7 +243,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         // 3. Và (là người tạo HOẶC là admin/super_admin)
                         return $user?->hasPermissionTo('resubmit_profile') && 
                                $record->status === 2 && 
-                               ($record->created_by === $user->id || $user->hasRole(['admin', 'super_admin']));
+                               ($record->created_by == $user->id || $user->hasRole(['admin', 'super_admin']));
                     })
                     ->action(function (Profile $record) {
                         $record->update([
