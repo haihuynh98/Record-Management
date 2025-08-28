@@ -154,36 +154,217 @@ class ProfileResource extends Resource implements HasShieldPermissions
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(50)
             ->poll('5s')
+            ->recordUrl(null)
+            ->actions([
+                \Filament\Tables\Actions\Action::make('view')
+                    ->label('Xem chi tiết')
+                    ->icon('heroicon-o-eye')
+                    ->modalHeading(function (Profile $record) {
+                        return 'Chi tiết hồ sơ #' . $record->code;
+                    })
+                    ->modalContent(function (Profile $record) {
+                        $statuses = [
+                            0 => 'Chờ duyệt',
+                            1 => 'Đã duyệt',
+                            2 => 'Từ chối',
+                            3 => 'Hủy',
+                        ];
+                        
+                        $statusColors = [
+                            0 => 'warning',
+                            1 => 'success',
+                            2 => 'danger',
+                            3 => 'gray',
+                        ];
+                        
+                        return view('filament.resources.profile.modal-content', [
+                            'record' => $record,
+                            'statuses' => $statuses,
+                            'statusColors' => $statusColors,
+                        ]);
+                    })
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Đóng')
+                    ->extraAttributes([
+                        'x-data' => '{ loading: false }',
+                        'x-on:click' => 'loading = true',
+                    ])
+                    ->modalActions([
+                        \Filament\Tables\Actions\Action::make('approve')
+                            ->label('Duyệt')
+                            ->icon('heroicon-m-check')
+                            ->color('success')
+                            ->requiresConfirmation()
+                            ->modalHeading('Xác nhận duyệt hồ sơ')
+                            ->modalDescription(function (Profile $record) {
+                                return 'Bạn có chắc chắn muốn duyệt hồ sơ #' . $record->code . '?';
+                            })
+                            ->modalSubmitActionLabel('Có, duyệt hồ sơ')
+                            ->modalCancelActionLabel('Không, hủy bỏ')
+                            ->visible(function (Profile $record) {
+                                $user = auth()->user();
+                                return $user?->hasPermissionTo('approve_profile') && $record->status === 0;
+                            })
+                            ->action(function (Profile $record) {
+                                $user = auth()->user();
+                                
+                                $record->update([
+                                    'status' => 1, // Đã duyệt
+                                    'approved_at' => now(),
+                                    'approved_by' => $user->id,
+                                ]);
 
-            ->recordUrl(function (Profile $record): ?string {
-                $user = auth()->user();
-                
-                // Kiểm tra quyền xem hồ sơ
-                if (!$user) return null;
-                
-                // Super admin và admin có thể xem tất cả
-                if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
-                    return static::getUrl('view', ['record' => $record]);
-                }
-                
-                // Người tạo chỉ xem hồ sơ của mình
-                if ($user->hasRole('creator')) {
-                    if ($record->created_by === $user->id && $record->status !== 3) {
-                        return static::getUrl('view', ['record' => $record]);
-                    }
-                    return null;
-                }
-                
-                // Người duyệt có thể xem hồ sơ chờ duyệt
-                if ($user->hasRole('approver')) {
-                    if ($record->status === 0) {
-                        return static::getUrl('view', ['record' => $record]);
-                    }
-                    return null;
-                }
-                
-                return null;
-            })
+                                Notification::make()
+                                    ->title('Đã duyệt hồ sơ')
+                                    ->success()
+                                    ->send();
+                            })
+                            ->extraAttributes([
+                                'x-data' => '{ processing: false }',
+                                'x-on:click' => 'processing = true',
+                                'x-bind:disabled' => 'processing',
+                                'x-html' => 'processing ? \'<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang duyệt...</span></div>\' : \'Duyệt\'',
+                            ]),
+                        \Filament\Tables\Actions\Action::make('reject')
+                            ->label('Từ chối')
+                            ->icon('heroicon-m-x-mark')
+                            ->color('danger')
+                            ->requiresConfirmation()
+                            ->modalHeading('Xác nhận từ chối hồ sơ')
+                            ->modalDescription(function (Profile $record) {
+                                return 'Bạn có chắc chắn muốn từ chối hồ sơ #' . $record->code . '?';
+                            })
+                            ->modalSubmitActionLabel('Có, từ chối hồ sơ')
+                            ->modalCancelActionLabel('Không, hủy bỏ')
+                            ->form([
+                                Forms\Components\Textarea::make('rejection_reason')
+                                    ->label('Lý do từ chối')
+                                    ->required()
+                                    ->placeholder('Nhập lý do từ chối hồ sơ...')
+                                    ->minLength(10)
+                                    ->maxLength(500),
+                            ])
+                            ->visible(function (Profile $record) {
+                                $user = auth()->user();
+                                return $user?->hasPermissionTo('reject_profile') && $record->status === 0;
+                            })
+                            ->action(function (Profile $record, array $data) {
+                                $user = auth()->user();
+                                
+                                $record->update([
+                                    'status' => 2, // Từ chối
+                                    'rejection_reason' => $data['rejection_reason'],
+                                    'approved_at' => now(),
+                                    'approved_by' => $user->id,
+                                ]);
+
+                                Notification::make()
+                                    ->title('Đã từ chối hồ sơ')
+                                    ->success()
+                                    ->send();
+                            })
+                            ->extraAttributes([
+                                'x-data' => '{ processing: false }',
+                                'x-on:click' => 'processing = true',
+                                'x-bind:disabled' => 'processing',
+                                'x-html' => 'processing ? \'<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang từ chối...</span></div>\' : \'Từ chối\'',
+                            ]),
+                        \Filament\Tables\Actions\Action::make('resubmit')
+                            ->label('Nộp lại')
+                            ->icon('heroicon-m-arrow-path')
+                            ->color('warning')
+                            ->requiresConfirmation()
+                            ->modalHeading('Xác nhận nộp lại hồ sơ')
+                            ->modalDescription(function (Profile $record) {
+                                return 'Bạn có chắc chắn muốn nộp lại hồ sơ #' . $record->code . '?';
+                            })
+                            ->modalSubmitActionLabel('Có, nộp lại')
+                            ->modalCancelActionLabel('Không, hủy bỏ')
+                            ->visible(function (Profile $record) {
+                                $user = auth()->user();
+                                
+                                return $user?->hasPermissionTo('resubmit_profile') && 
+                                       $record->status === 2 && 
+                                       ($record->created_by == $user->id || $user->hasRole(['admin', 'super_admin']));
+                            })
+                            ->action(function (Profile $record) {
+                                $record->update([
+                                    'status' => 0, // Chờ duyệt
+                                    'rejection_reason' => null, // Xóa lý do từ chối
+                                ]);
+
+                                Notification::make()
+                                    ->title('Đã nộp lại hồ sơ thành công')
+                                    ->body('Hồ sơ #' . $record->code . ' đã được nộp lại.')
+                                    ->success()
+                                    ->send();
+                            })
+                            ->extraAttributes([
+                                'x-data' => '{ processing: false }',
+                                'x-on:click' => 'processing = true',
+                                'x-bind:disabled' => 'processing',
+                                'x-html' => 'processing ? \'<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang nộp lại...</span></div>\' : \'Nộp lại\'',
+                            ]),
+                        \Filament\Tables\Actions\Action::make('cancel')
+                            ->label('Hủy')
+                            ->icon('heroicon-m-x-circle')
+                            ->color('gray')
+                            ->requiresConfirmation()
+                            ->modalHeading('Xác nhận hủy hồ sơ')
+                            ->modalDescription(function (Profile $record) {
+                                return 'Bạn có chắc chắn muốn hủy hồ sơ #' . $record->code . '? Hành động này không thể hoàn tác.';
+                            })
+                            ->modalSubmitActionLabel('Có, hủy hồ sơ')
+                            ->modalCancelActionLabel('Không, giữ lại')
+                            ->visible(function (Profile $record) {
+                                $user = auth()->user();
+                                return $user?->hasPermissionTo('cancel_profile') && $record->status === 2;
+                            })
+                            ->action(function (Profile $record) {
+                                $user = auth()->user();
+                                
+                                $record->update([
+                                    'status' => 3, // Hủy
+                                    'approved_at' => now(),
+                                    'approved_by' => $user->id,
+                                ]);
+
+                                Notification::make()
+                                    ->title('Đã hủy hồ sơ')
+                                    ->body('Hồ sơ #' . $record->code . ' đã được hủy thành công.')
+                                    ->success()
+                                    ->send();
+                            })
+                            ->extraAttributes([
+                                'x-data' => '{ processing: false }',
+                                'x-on:click' => 'processing = true',
+                                'x-bind:disabled' => 'processing',
+                                'x-html' => 'processing ? \'<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang hủy...</span></div>\' : \'Hủy\'',
+                            ]),
+                    ])
+                    ->visible(function (Profile $record) {
+                        $user = auth()->user();
+                        
+                        if (!$user) return false;
+                        
+                        // Super admin và admin có thể xem tất cả
+                        if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
+                            return true;
+                        }
+                        
+                        // Người tạo chỉ xem hồ sơ của mình
+                        if ($user->hasRole('creator')) {
+                            return $record->created_by === $user->id && $record->status !== 3;
+                        }
+                        
+                        // Người duyệt có thể xem hồ sơ chờ duyệt
+                        if ($user->hasRole('approver')) {
+                            return $record->status === 0;
+                        }
+                        
+                        return false;
+                    }),
+            ])
             ->columns([
                 Tables\Columns\TextColumn::make('code')
                     ->label('Mã hồ sơ')
@@ -239,128 +420,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
             ->filters([
                 //
             ])
-            ->actions([
-                \Filament\Tables\Actions\Action::make('approve')
-                    ->label('Duyệt')
-                    ->icon('heroicon-m-check')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->visible(function (Profile $record) {
-                        $user = auth()->user();
-                        return $user?->hasPermissionTo('approve_profile') && $record->status === 0;
-                    })
-                    ->action(function (Profile $record) {
-                        $user = auth()->user();
-                        
-                        $record->update([
-                            'status' => 1, // Đã duyệt
-                            'approved_at' => now(),
-                            'approved_by' => $user->id,
-                        ]);
 
-                        Notification::make()
-                            ->title('Đã duyệt hồ sơ')
-                            ->success()
-                            ->send();
-                    }),
-                \Filament\Tables\Actions\Action::make('reject')
-                    ->label('Từ chối')
-                    ->icon('heroicon-m-x-mark')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->visible(function (Profile $record) {
-                        $user = auth()->user();
-                        return $user?->hasPermissionTo('reject_profile') && $record->status === 0;
-                    })
-                    ->form([
-                        Forms\Components\Textarea::make('rejection_reason')
-                            ->label('Lý do từ chối')
-                            ->required()
-                            ->placeholder('Nhập lý do từ chối hồ sơ...')
-                            ->minLength(10)
-                            ->maxLength(500),
-                    ])
-                    ->action(function (Profile $record, array $data) {
-                        $user = auth()->user();
-                        
-                        $record->update([
-                            'status' => 2, // Từ chối
-                            'rejection_reason' => $data['rejection_reason'],
-                            'approved_at' => now(),
-                            'approved_by' => $user->id,
-                        ]);
-
-                        Notification::make()
-                            ->title('Đã từ chối hồ sơ')
-                            ->success()
-                            ->send();
-                    }),
-                \Filament\Tables\Actions\Action::make('resubmit')
-                    ->label('Nộp lại')
-                    ->icon('heroicon-m-arrow-path')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->modalHeading('Xác nhận nộp lại hồ sơ')
-                    ->modalDescription(function (Profile $record) {
-                        return 'Bạn có chắc chắn muốn nộp lại hồ sơ #' . $record->code . '?';
-                    })
-                    ->modalSubmitActionLabel('Có, nộp lại')
-                    ->modalCancelActionLabel('Không, hủy bỏ')
-                    ->visible(function (Profile $record) {
-                        $user = auth()->user();
-                        
-                        // Cho phép resubmit nếu:
-                        // 1. Có quyền resubmit_profile
-                        // 2. Hồ sơ bị từ chối (status = 2)
-                        // 3. Và (là người tạo HOẶC là admin/super_admin)
-                        return $user?->hasPermissionTo('resubmit_profile') && 
-                               $record->status === 2 && 
-                               ($record->created_by == $user->id || $user->hasRole(['admin', 'super_admin']));
-                    })
-                    ->action(function (Profile $record) {
-                        $record->update([
-                            'status' => 0, // Chờ duyệt
-                            'rejection_reason' => null, // Xóa lý do từ chối
-                        ]);
-
-                        Notification::make()
-                            ->title('Đã nộp lại hồ sơ thành công')
-                            ->body('Hồ sơ #' . $record->code . ' đã được nộp lại.')
-                            ->success()
-                            ->send();
-                    }),
-                \Filament\Tables\Actions\Action::make('cancel')
-                    ->label('Hủy')
-                    ->icon('heroicon-m-x-circle')
-                    ->color('gray')
-                    ->requiresConfirmation()
-                    ->modalHeading('Xác nhận hủy hồ sơ')
-                    ->modalDescription(function (Profile $record) {
-                        return 'Bạn có chắc chắn muốn hủy hồ sơ #' . $record->code . '? Hành động này không thể hoàn tác.';
-                    })
-                    ->modalSubmitActionLabel('Có, hủy hồ sơ')
-                    ->modalCancelActionLabel('Không, giữ lại')
-                    ->visible(function (Profile $record) {
-                        $user = auth()->user();
-                        return $user?->hasPermissionTo('cancel_profile') && $record->status === 2;
-                    })
-                    ->action(function (Profile $record) {
-                        $user = auth()->user();
-                        
-                        $record->update([
-                            'status' => 3, // Hủy
-                            'approved_at' => now(),
-                            'approved_by' => $user->id,
-                        ]);
-
-                        Notification::make()
-                            ->title('Đã hủy hồ sơ')
-                            ->body('Hồ sơ #' . $record->code . ' đã được hủy thành công.')
-                            ->success()
-                            ->send();
-                    }),
-                
-            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
 //                    Tables\Actions\DeleteBulkAction::make(),
@@ -403,7 +463,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
         return [
             'index' => Pages\ListProfiles::route('/'),
             'create' => Pages\CreateProfile::route('/create'),
-            'view' => Pages\ViewProfile::route('/{record}/view'),
+            // 'view' => Pages\ViewProfile::route('/{record}/view'), // Không sử dụng nữa - đã thay thế bằng modal popup
             'edit' => Pages\EditProfile::route('/{record}/edit'),
         ];
     }
