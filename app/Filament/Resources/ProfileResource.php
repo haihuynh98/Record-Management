@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Schema;
 
 use Filament\Tables\Actions\EditAction;
 use Filament\Support\RawJs;
+use App\Services\ProfileViewingService;
 
 class ProfileResource extends Resource implements HasShieldPermissions
 {
@@ -157,8 +158,49 @@ class ProfileResource extends Resource implements HasShieldPermissions
             ->recordUrl(null)
             ->actions([
                 \Filament\Tables\Actions\Action::make('view')
-                    ->label('Xem chi tiết')
+                    ->label(function (Profile $record) {
+                        $user = auth()->user();
+                        if (!$user) return 'Xem chi tiết';
+                        
+                        // Chỉ áp dụng session management cho người có quyền duyệt/từ chối
+                        if (!$user->hasPermissionTo('approve_profile') && !$user->hasPermissionTo('reject_profile')) {
+                            return 'Xem chi tiết';
+                        }
+                        
+                        $profileViewingService = app(ProfileViewingService::class);
+                        
+                        // Kiểm tra xem profile có đang được xem bởi người khác không
+                        if ($profileViewingService->isProfileBeingViewed($record)) {
+                            $currentViewer = $profileViewingService->getCurrentViewer($record);
+                            if ($currentViewer && $currentViewer->id !== $user->id) {
+                                return 'Có người đang xử lý';
+                            }
+                        }
+                        
+                        return 'Xem chi tiết';
+                    })
                     ->icon('heroicon-o-eye')
+                    ->color(function (Profile $record) {
+                        $user = auth()->user();
+                        if (!$user) return 'primary';
+                        
+                        // Chỉ áp dụng session management cho người có quyền duyệt/từ chối
+                        if (!$user->hasPermissionTo('approve_profile') && !$user->hasPermissionTo('reject_profile')) {
+                            return 'primary';
+                        }
+                        
+                        $profileViewingService = app(ProfileViewingService::class);
+                        
+                        // Kiểm tra xem profile có đang được xem bởi người khác không
+                        if ($profileViewingService->isProfileBeingViewed($record)) {
+                            $currentViewer = $profileViewingService->getCurrentViewer($record);
+                            if ($currentViewer && $currentViewer->id !== $user->id) {
+                                return 'gray';
+                            }
+                        }
+                        
+                        return 'primary';
+                    })
                     ->modalHeading(function (Profile $record) {
                         return 'Chi tiết hồ sơ #' . $record->code;
                     })
@@ -185,10 +227,40 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     })
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Đóng')
-                    ->extraAttributes([
-                        'x-data' => '{ loading: false }',
-                        'x-on:click' => 'loading = true',
-                    ])
+                    ->extraAttributes(function (Profile $record) {
+                        return [
+                            'x-data' => '{ loading: false, sessionId: null }',
+                            'x-on:click' => 'handleViewClick($event, ' . $record->id . ')',
+                            'data-profile-id' => $record->id,
+                        ];
+                    })
+                    ->action(function (Profile $record) {
+                        $user = auth()->user();
+                        if (!$user) return;
+                        
+                        // Chỉ áp dụng session management cho người có quyền duyệt/từ chối
+                        if (!$user->hasPermissionTo('approve_profile') && !$user->hasPermissionTo('reject_profile')) {
+                            return;
+                        }
+                        
+                        $profileViewingService = app(ProfileViewingService::class);
+                        
+                        // Kiểm tra xem profile có đang được xem bởi người khác không
+                        if ($profileViewingService->isProfileBeingViewed($record)) {
+                            $currentViewer = $profileViewingService->getCurrentViewer($record);
+                            if ($currentViewer && $currentViewer->id !== $user->id) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Không thể xem hồ sơ')
+                                    ->body('Hồ sơ đang được xử lý bởi ' . $currentViewer->username)
+                                    ->warning()
+                                    ->send();
+                                return;
+                            }
+                        }
+                        
+                        // Bắt đầu session
+                        $profileViewingService->startViewingSession($record, $user);
+                    })
                     ->modalActions([
                         \Filament\Tables\Actions\Action::make('approve')
                             ->label('Duyệt')
