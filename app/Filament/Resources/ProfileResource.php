@@ -67,9 +67,15 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         }
                         return true;
                     })
-                    ->rules(['alpha_num'])
+                    ->inputMode('numeric')
+                    ->extraInputAttributes([
+                        'pattern' => '[0-9]*',
+                        'onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57',
+                        'oninput' => 'this.value = this.value.replace(/[^0-9]/g, "")'
+                    ])
+                    ->rules(['regex:/^[0-9]+$/'])
                     ->validationMessages([
-                        'alpha_num' => 'Chỉ cho phép ký tự 0-9, a-z, A-Z (không khoảng trắng/ký tự đặc biệt).',
+                        'regex' => 'Mã hồ sơ chỉ cho phép nhập số (0-9) và không có dấu cách.',
                     ])
                     ->maxLength(64),
                 Forms\Components\TextInput::make('amount')
@@ -77,7 +83,6 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->required()
                     ->numeric()
                     ->minValue(40000)
-                    ->suffix('VNĐ')
                     ->helperText('Giá trị tối thiểu: 40,000 VNĐ')
                     ->mask(RawJs::make('$money($input)'))
                     ->stripCharacters(','),
@@ -122,7 +127,11 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->numeric(thousandsSeparator: ','),
                 Tables\Columns\TextColumn::make('approvedBy.username')
                     ->label('Người duyệt')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(function () {
+                        $user = auth()->user();
+                        return $user?->hasPermissionTo('approve_profile');
+                    }),
                 Tables\Columns\TextColumn::make('createdBy.username')
                     ->label('Người tạo')
                     ->formatStateUsing(function ($state, $record) {
@@ -219,7 +228,14 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->requiresConfirmation()
                     ->visible(function (Profile $record) {
                         $user = auth()->user();
-                        return $user?->hasPermissionTo('resubmit_profile') && $record->status === 2 && $record->created_by === $user->id;
+                        
+                        // Cho phép resubmit nếu:
+                        // 1. Có quyền resubmit_profile
+                        // 2. Hồ sơ bị từ chối (status = 2)
+                        // 3. Và (là người tạo HOẶC là admin/super_admin)
+                        return $user?->hasPermissionTo('resubmit_profile') && 
+                               $record->status === 2 && 
+                               ($record->created_by === $user->id || $user->hasRole(['admin', 'super_admin']));
                     })
                     ->action(function (Profile $record) {
                         $record->update([

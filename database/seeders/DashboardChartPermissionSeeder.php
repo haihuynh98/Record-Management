@@ -13,20 +13,41 @@ class DashboardChartPermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create dashboard charts permission
-        $permission = Permission::firstOrCreate(['name' => 'view_dashboard_charts']);
+        // Tạo các quyền mới
+        $permissions = [
+            'approve_profile',
+            'reject_profile', 
+            'resubmit_profile'
+        ];
 
-        // Assign permission to roles
-        $superAdmin = Role::where('name', 'super_admin')->first();
-        if ($superAdmin) {
-            $superAdmin->givePermissionTo($permission);
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web'
+            ]);
         }
 
-        $admin = Role::where('name', 'admin')->first();
-        if ($admin) {
-            $admin->givePermissionTo($permission);
+        // Gán quyền approve và reject cho role admin, super_admin, và approver
+        $approveRejectRoles = ['admin', 'super_admin', 'approver'];
+        foreach ($approveRejectRoles as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                $role->givePermissionTo(['approve_profile', 'reject_profile']);
+            }
         }
 
-        $this->command->info('Dashboard charts permission has been created and assigned to roles.');
+        // Gán quyền resubmit cho role creator
+        $creatorRole = Role::where('name', 'creator')->first();
+        if ($creatorRole) {
+            $creatorRole->givePermissionTo('resubmit_profile');
+        }
+
+        // Gán tất cả quyền cho super_admin
+        $superAdminRole = Role::where('name', 'super_admin')->first();
+        if ($superAdminRole) {
+            $superAdminRole->givePermissionTo('resubmit_profile');
+        }
+
+        $this->command->info('Dashboard Chart Permissions seeded successfully!');
     }
 }
