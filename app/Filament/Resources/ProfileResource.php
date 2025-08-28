@@ -58,8 +58,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->unique(ignoreRecord: true, table: Profile::class, column: 'code')
                     ->prefix('#')
                     ->disabled(function (string $context) {
-                        // Disable trong màn hình edit
-                        if ($context === 'edit') {
+                        // Disable trong màn hình edit và view
+                        if ($context === 'edit' || $context === 'view') {
                             return true;
                         }
                         
@@ -87,17 +87,63 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->minValue(40000)
                     ->helperText('Giá trị tối thiểu: 40,000 VNĐ')
                     ->mask(RawJs::make('$money($input)'))
-                    ->stripCharacters(','),
+                    ->stripCharacters(',')
+                    ->disabled(fn (string $context) => $context === 'view'),
                 Forms\Components\Textarea::make('rejection_reason')
                     ->label('Lý do từ chối')
                     ->placeholder('Nhập lý do từ chối hồ sơ...')
                     ->minLength(10)
                     ->maxLength(500)
                     ->visible(function (string $context, $record) {
-                        // Chỉ hiển thị ở màn hình edit và status là reject (2)
-                        return $context === 'edit' && $record && $record->status === 2;
+                        // Hiển thị ở màn hình edit và view khi status là reject (2)
+                        return ($context === 'edit' || $context === 'view') && $record && $record->status === 2;
                     })
-                    ->helperText('Chỉ hiển thị khi chỉnh sửa hồ sơ bị từ chối'),
+                    ->disabled(fn (string $context) => $context === 'view')
+                    ->helperText('Chỉ hiển thị khi hồ sơ bị từ chối'),
+                // Thêm các field thông tin bổ sung cho trang view
+                Forms\Components\TextInput::make('status')
+                    ->label('Trạng thái')
+                    ->disabled()
+                    ->visible(fn (string $context) => $context === 'view')
+                    ->formatStateUsing(function ($state) {
+                        $statuses = [
+                            0 => 'Chờ duyệt',
+                            1 => 'Đã duyệt',
+                            2 => 'Từ chối',
+                            3 => 'Hủy',
+                        ];
+                        return $statuses[$state] ?? 'Chờ duyệt';
+                    }),
+                Forms\Components\TextInput::make('createdBy.username')
+                    ->label('Người tạo')
+                    ->disabled()
+                    ->visible(fn (string $context) => $context === 'view'),
+                Forms\Components\TextInput::make('approvedBy.username')
+                    ->label('Người duyệt')
+                    ->disabled()
+                    ->visible(fn (string $context, $record) => $context === 'view' && $record && in_array($record->status, [1, 2, 3])),
+                Forms\Components\TextInput::make('created_at')
+                    ->label('Ngày tạo')
+                    ->disabled()
+                    ->visible(fn (string $context) => $context === 'view')
+                    ->formatStateUsing(function ($state) {
+                        if (!$state) return '';
+                        if (is_string($state)) {
+                            return \Carbon\Carbon::parse($state)->format('d/m/Y H:i:s');
+                        }
+                        return $state->format('d/m/Y H:i:s');
+                    }),
+                Forms\Components\TextInput::make('approved_at')
+                    ->label('Ngày duyệt')
+                    ->disabled()
+                    ->visible(fn (string $context, $record) => $context === 'view' && $record && in_array($record->status, [1, 2, 3]))
+                    ->formatStateUsing(function ($state) {
+                        if (!$state) return '';
+                        if (is_string($state)) {
+                            return \Carbon\Carbon::parse($state)->format('d/m/Y H:i:s');
+                        }
+                        return $state->format('d/m/Y H:i:s');
+                    }),
             ]);
     }
 
@@ -109,7 +155,35 @@ class ProfileResource extends Resource implements HasShieldPermissions
             ->defaultPaginationPageOption(50)
             ->poll('5s')
 
-            ->recordUrl(null) // Bỏ khả năng click vào record để edit
+            ->recordUrl(function (Profile $record): ?string {
+                $user = auth()->user();
+                
+                // Kiểm tra quyền xem hồ sơ
+                if (!$user) return null;
+                
+                // Super admin và admin có thể xem tất cả
+                if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
+                    return static::getUrl('view', ['record' => $record]);
+                }
+                
+                // Người tạo chỉ xem hồ sơ của mình
+                if ($user->hasRole('creator')) {
+                    if ($record->created_by === $user->id && $record->status !== 3) {
+                        return static::getUrl('view', ['record' => $record]);
+                    }
+                    return null;
+                }
+                
+                // Người duyệt có thể xem hồ sơ chờ duyệt
+                if ($user->hasRole('approver')) {
+                    if ($record->status === 0) {
+                        return static::getUrl('view', ['record' => $record]);
+                    }
+                    return null;
+                }
+                
+                return null;
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('code')
                     ->label('Mã hồ sơ')
@@ -322,6 +396,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
         return [
             'index' => Pages\ListProfiles::route('/'),
             'create' => Pages\CreateProfile::route('/create'),
+            'view' => Pages\ViewProfile::route('/{record}/view'),
             'edit' => Pages\EditProfile::route('/{record}/edit'),
         ];
     }
