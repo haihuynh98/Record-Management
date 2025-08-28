@@ -300,6 +300,12 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->icon('heroicon-m-arrow-path')
                     ->color('warning')
                     ->requiresConfirmation()
+                    ->modalHeading('Xác nhận nộp lại hồ sơ')
+                    ->modalDescription(function (Profile $record) {
+                        return 'Bạn có chắc chắn muốn nộp lại hồ sơ #' . $record->code . '?';
+                    })
+                    ->modalSubmitActionLabel('Có, nộp lại')
+                    ->modalCancelActionLabel('Không, hủy bỏ')
                     ->visible(function (Profile $record) {
                         $user = auth()->user();
                         
@@ -319,6 +325,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
 
                         Notification::make()
                             ->title('Đã nộp lại hồ sơ thành công')
+                            ->body('Hồ sơ #' . $record->code . ' đã được nộp lại.')
                             ->success()
                             ->send();
                     }),
@@ -335,7 +342,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->modalCancelActionLabel('Không, giữ lại')
                     ->visible(function (Profile $record) {
                         $user = auth()->user();
-                        return $user?->hasPermissionTo('cancel_profile') && $record->status === 0;
+                        return $user?->hasPermissionTo('cancel_profile') && $record->status === 2;
                     })
                     ->action(function (Profile $record) {
                         $user = auth()->user();
