@@ -28,6 +28,7 @@ class PermissionSeeder extends Seeder
             'approve_profile',
             'reject_profile',
             'resubmit_profile',
+            'cancel_profile',
         ];
 
         // Create permissions for User
@@ -81,6 +82,7 @@ class PermissionSeeder extends Seeder
             'delete_any_profile',
             'approve_profile',
             'reject_profile',
+            'cancel_profile',
             // User permissions
             'view_user',
             'view_any_user',
@@ -107,6 +109,7 @@ class PermissionSeeder extends Seeder
             'view_any_profile',
             'approve_profile',
             'reject_profile',
+            'cancel_profile',
         ]);
 
         $creator = Role::firstOrCreate(['name' => 'creator']);

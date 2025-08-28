@@ -44,6 +44,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
             'approve',
             'reject',
             'resubmit',
+            'cancel',
         ];
     }
 
@@ -108,18 +109,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
             ->defaultPaginationPageOption(50)
             ->poll('5s')
 
-            ->recordUrl(function (Profile $record): ?string {
-                $user = auth()->user();
-
-                $canEdit = $user && (
-                        $user->can('update', $record)
-                        || ($user->hasPermissionTo('update_profile') && $record->created_by === $user->id)
-                    );
-
-                return ($canEdit)
-                    ? static::getUrl('edit', ['record' => $record])
-                    : null;
-            })
+            ->recordUrl(null) // Bỏ khả năng click vào record để edit
             ->columns([
                 Tables\Columns\TextColumn::make('code')
                     ->label('Mã hồ sơ')
@@ -155,6 +145,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             0 => 'Chờ duyệt',
                             1 => 'Đã duyệt',
                             2 => 'Từ chối',
+                            3 => 'Hủy',
                         ];
                         return $statuses[$state] ?? 'Chờ duyệt';
                     })
@@ -164,6 +155,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             0 => 'warning',
                             1 => 'success',
                             2 => 'danger',
+                            3 => 'gray',
                             default => 'warning',
                         };
                     }),
@@ -256,18 +248,35 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             ->success()
                             ->send();
                     }),
-                Tables\Actions\EditAction::make()
+                \Filament\Tables\Actions\Action::make('cancel')
+                    ->label('Hủy')
+                    ->icon('heroicon-m-x-circle')
+                    ->color('gray')
+                    ->requiresConfirmation()
+                    ->modalHeading('Xác nhận hủy hồ sơ')
+                    ->modalDescription(function (Profile $record) {
+                        return 'Bạn có chắc chắn muốn hủy hồ sơ #' . $record->code . '? Hành động này không thể hoàn tác.';
+                    })
+                    ->modalSubmitActionLabel('Có, hủy hồ sơ')
+                    ->modalCancelActionLabel('Không, giữ lại')
                     ->visible(function (Profile $record) {
                         $user = auth()->user();
-                        if ($user?->can('update', $record)) {
-                            return $record->status === 0; // Chỉ cho phép edit hồ sơ chờ duyệt
-                        }
+                        return $user?->hasPermissionTo('cancel_profile') && $record->status === 0;
+                    })
+                    ->action(function (Profile $record) {
+                        $user = auth()->user();
+                        
+                        $record->update([
+                            'status' => 3, // Hủy
+                            'approved_at' => now(),
+                            'approved_by' => $user->id,
+                        ]);
 
-                        if ($user?->hasPermissionTo('update_profile') && $record->created_by === $user->id) {
-                            return $record->status === 0;
-                        }
-
-                        return false;
+                        Notification::make()
+                            ->title('Đã hủy hồ sơ')
+                            ->body('Hồ sơ #' . $record->code . ' đã được hủy thành công.')
+                            ->success()
+                            ->send();
                     }),
                 
             ])
@@ -288,9 +297,9 @@ class ProfileResource extends Resource implements HasShieldPermissions
         // Super admin và admin có thể xem tất cả
         if ($user->hasRole('super_admin') || $user->hasRole('admin')) return $query;
 
-        // Người tạo chỉ xem hồ sơ của mình
+        // Người tạo chỉ xem hồ sơ của mình và không xem hồ sơ đã hủy
         if ($user->hasRole('creator')) {
-            return $query->where('created_by', $user->id);
+            return $query->where('created_by', $user->id)->where('status', '!=', 3);
         }
 
         // Người duyệt chỉ xem hồ sơ chờ duyệt
