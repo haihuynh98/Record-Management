@@ -46,10 +46,8 @@ class ProfileStatistics extends Page implements HasTable
                     ->label('Hôm nay')
                     ->formatStateUsing(function ($state, $record) {
                         $count = $record->today_count ?? 0;
-                        $amount = $record->today_amount ?? 0;
                         return view('filament.components.statistics-cell', [
-                            'count' => $count,
-                            'amount' => $amount
+                            'count' => $count
                         ]);
                     })
                     ->html()
@@ -58,10 +56,8 @@ class ProfileStatistics extends Page implements HasTable
                     ->label('Tuần này')
                     ->formatStateUsing(function ($state, $record) {
                         $count = $record->week_count ?? 0;
-                        $amount = $record->week_amount ?? 0;
                         return view('filament.components.statistics-cell', [
-                            'count' => $count,
-                            'amount' => $amount
+                            'count' => $count
                         ]);
                     })
                     ->html()
@@ -70,10 +66,8 @@ class ProfileStatistics extends Page implements HasTable
                     ->label('Tháng này')
                     ->formatStateUsing(function ($state, $record) {
                         $count = $record->month_count ?? 0;
-                        $amount = $record->month_amount ?? 0;
                         return view('filament.components.statistics-cell', [
-                            'count' => $count,
-                            'amount' => $amount
+                            'count' => $count
                         ]);
                     })
                     ->html()
@@ -82,10 +76,8 @@ class ProfileStatistics extends Page implements HasTable
                     ->label('Năm nay')
                     ->formatStateUsing(function ($state, $record) {
                         $count = $record->year_count ?? 0;
-                        $amount = $record->year_amount ?? 0;
                         return view('filament.components.statistics-cell', [
-                            'count' => $count,
-                            'amount' => $amount
+                            'count' => $count
                         ]);
                     })
                     ->html()
@@ -118,27 +110,7 @@ class ProfileStatistics extends Page implements HasTable
                 'profiles as year_count' => function ($query) use ($yearStart) {
                     $query->where('created_at', '>=', $yearStart);
                 }
-            ])
-            ->withSum([
-                'profiles as today_amount' => function ($query) use ($today) {
-                    $query->whereDate('created_at', $today);
-                }
-            ], 'amount')
-            ->withSum([
-                'profiles as week_amount' => function ($query) use ($weekStart) {
-                    $query->where('created_at', '>=', $weekStart);
-                }
-            ], 'amount')
-            ->withSum([
-                'profiles as month_amount' => function ($query) use ($monthStart) {
-                    $query->where('created_at', '>=', $monthStart);
-                }
-            ], 'amount')
-            ->withSum([
-                'profiles as year_amount' => function ($query) use ($yearStart) {
-                    $query->where('created_at', '>=', $yearStart);
-                }
-            ], 'amount');
+            ]);
     }
 
     protected function getHeaderActions(): array

@@ -1,4 +1,68 @@
-<div class="space-y-6" x-data="{ loading: false }" x-init="loading = false">
+<div class="space-y-6" x-data="{ 
+    loading: false,
+    copyToClipboard(text, fieldName) {
+        if (navigator.clipboard && window.isSecureContext) {
+            // Sử dụng modern Clipboard API
+            navigator.clipboard.writeText(text).then(() => {
+                this.showNotification(fieldName, true);
+            }).catch(() => {
+                this.showNotification(fieldName, false);
+            });
+        } else {
+            // Fallback cho older browsers
+            const tempInput = document.createElement('input');
+            tempInput.value = text;
+            tempInput.style.position = 'absolute';
+            tempInput.style.left = '-9999px';
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            tempInput.setSelectionRange(0, 99999);
+            
+            try {
+                document.execCommand('copy');
+                this.showNotification(fieldName, true);
+            } catch (err) {
+                this.showNotification(fieldName, false);
+            }
+            
+            document.body.removeChild(tempInput);
+        }
+    },
+    showNotification(fieldName, success = true) {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full ${
+            success ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`;
+        
+        notification.innerHTML = `
+            <div class='flex items-center space-x-2'>
+                <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='${
+                        success 
+                            ? 'M5 13l4 4L19 7' 
+                            : 'M6 18L18 6M6 6l12 12'
+                    }'></path>
+                </svg>
+                <span>${success ? `Đã sao chép ${fieldName} vào clipboard` : `Không thể sao chép ${fieldName}`}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+}" x-init="loading = false">
     <!-- Loading indicator -->
     <div x-show="loading" class="flex items-center justify-center py-8">
         <div class="flex items-center space-x-2">
@@ -12,13 +76,37 @@
         <!-- Thông tin cơ bản -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-gray-50 p-4 rounded-lg">
-                <label class="text-sm font-medium text-gray-500">Mã hồ sơ</label>
+                <div class="flex items-center justify-between">
+                    <label class="text-sm font-medium text-gray-500">Mã hồ sơ</label>
+                    <button 
+                        type="button"
+                        class="text-gray-400 hover:text-gray-600 transition-colors"
+                        x-on:click="copyToClipboard('#{{ $record->code }}', 'Mã hồ sơ')"
+                        title="Sao chép mã hồ sơ"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                    </button>
+                </div>
                 <p class="text-lg font-semibold text-gray-900">#{{ $record->code }}</p>
             </div>
             
             <div class="bg-gray-50 p-4 rounded-lg">
-                <label class="text-sm font-medium text-gray-500">Giá trị hồ sơ</label>
-                <p class="text-lg font-semibold text-green-600">{{ number_format($record->amount, 0, ',', ',') }} VNĐ</p>
+                <div class="flex items-center justify-between">
+                    <label class="text-sm font-medium text-gray-500">ID nhân vật</label>
+                    <button 
+                        type="button"
+                        class="text-gray-400 hover:text-gray-600 transition-colors"
+                        x-on:click="copyToClipboard('{{ $record->character_id ?? 'N/A' }}', 'ID nhân vật')"
+                        title="Sao chép ID nhân vật"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                    </button>
+                </div>
+                <p class="text-lg font-semibold text-blue-600">{{ $record->character_id ?? 'N/A' }}</p>
             </div>
             
             <div class="bg-gray-50 p-4 rounded-lg">
@@ -75,3 +163,5 @@
         @endif
     </div>
 </div>
+
+

@@ -30,7 +30,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('Hệ thống Quản lý Hồ sơ')
             ->brandLogo(fn () => view('filament.components.logo'))
             ->brandLogoHeight('2.5rem')
-            ->favicon(asset('images/favicon.svg'))
+            ->favicon(asset('images/icon.png'))
             ->id('admin')
             ->path('admin')
             ->login(Login::class)
@@ -91,6 +91,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->databaseNotifications();
     }
 }

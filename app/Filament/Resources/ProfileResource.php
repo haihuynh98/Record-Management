@@ -80,14 +80,11 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         'regex' => 'Mã hồ sơ chỉ cho phép nhập số (0-9) và không có dấu cách.',
                     ])
                     ->maxLength(64),
-                Forms\Components\TextInput::make('amount')
-                    ->label('Giá trị hồ sơ')
+                Forms\Components\TextInput::make('character_id')
+                    ->label('ID nhân vật')
                     ->required()
-                    ->numeric()
-                    ->minValue(40000)
-                    ->helperText('Giá trị tối thiểu: 40,000 VNĐ')
-                    ->mask(RawJs::make('$money($input)'))
-                    ->stripCharacters(',')
+                    ->maxLength(100)
+                    ->helperText('Nhập ID nhân vật (cho phép chữ và số)')
                     ->disabled(fn (string $context) => $context === 'view'),
                 Forms\Components\Textarea::make('rejection_reason')
                     ->label('Lý do từ chối')
@@ -223,7 +220,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 'x-data' => '{ processing: false }',
                                 'x-on:click' => 'processing = true',
                                 'x-bind:disabled' => 'processing',
-                                'x-html' => 'processing ? \'<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang duyệt...</span></div>\' : \'Duyệt\'',
+                                'x-html' => 'processing ? `<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang duyệt...</span></div>` : `Duyệt`',
                             ]),
                         \Filament\Tables\Actions\Action::make('reject')
                             ->label('Từ chối')
@@ -267,7 +264,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 'x-data' => '{ processing: false }',
                                 'x-on:click' => 'processing = true',
                                 'x-bind:disabled' => 'processing',
-                                'x-html' => 'processing ? \'<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang từ chối...</span></div>\' : \'Từ chối\'',
+                                'x-html' => 'processing ? `<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang từ chối...</span></div>` : `Từ chối`',
                             ]),
                         \Filament\Tables\Actions\Action::make('resubmit')
                             ->label('Nộp lại')
@@ -303,7 +300,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 'x-data' => '{ processing: false }',
                                 'x-on:click' => 'processing = true',
                                 'x-bind:disabled' => 'processing',
-                                'x-html' => 'processing ? \'<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang nộp lại...</span></div>\' : \'Nộp lại\'',
+                                'x-html' => 'processing ? `<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang nộp lại...</span></div>` : `Nộp lại`',
                             ]),
                         \Filament\Tables\Actions\Action::make('cancel')
                             ->label('Hủy')
@@ -339,7 +336,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 'x-data' => '{ processing: false }',
                                 'x-on:click' => 'processing = true',
                                 'x-bind:disabled' => 'processing',
-                                'x-html' => 'processing ? \'<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang hủy...</span></div>\' : \'Hủy\'',
+                                'x-html' => 'processing ? `<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang hủy...</span></div>` : `Hủy`',
                             ]),
                     ])
                     ->visible(function (Profile $record) {
@@ -374,10 +371,13 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->copyableState(fn (string $state): string => "#{$state}")
                     ->copyMessage('Đã sao chép mã hồ sơ vào clipboard')
                     ->copyMessageDuration(1500),
-                Tables\Columns\TextColumn::make('amount')
-                    ->label('Giá trị hồ sơ')
-                    ->money(currency: 'VND')
-                    ->numeric(thousandsSeparator: ','),
+                Tables\Columns\TextColumn::make('character_id')
+                    ->label('ID nhân vật')
+                    ->searchable()
+                    ->copyable()
+                    ->copyableState(fn (string $state): string => $state)
+                    ->copyMessage('Đã sao chép ID nhân vật vào clipboard')
+                    ->copyMessageDuration(1500),
                 Tables\Columns\TextColumn::make('approvedBy.username')
                     ->label('Người duyệt')
                     ->toggleable(isToggledHiddenByDefault: true)
