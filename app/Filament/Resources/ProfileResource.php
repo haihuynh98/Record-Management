@@ -231,7 +231,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 'x-data' => '{ processing: false }',
                                 'x-on:click' => 'processing = true',
                                 'x-bind:disabled' => 'processing',
-                                'x-html' => 'processing ? `<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang duyệt...</span></div>` : `Duyệt`',
+                                'x-html' => 'processing ? `Đang duyệt...` : `Duyệt`',
                             ]),
                         \Filament\Tables\Actions\Action::make('reject')
                             ->label('Từ chối')
@@ -311,7 +311,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 'x-data' => '{ processing: false }',
                                 'x-on:click' => 'processing = true',
                                 'x-bind:disabled' => 'processing',
-                                'x-html' => 'processing ? `<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang nộp lại...</span></div>` : `Nộp lại`',
+                                'x-html' => 'processing ? `<Đang nộp lại...` : `Nộp lại`',
                             ]),
                         \Filament\Tables\Actions\Action::make('cancel')
                             ->label('Hủy')
@@ -347,7 +347,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 'x-data' => '{ processing: false }',
                                 'x-on:click' => 'processing = true',
                                 'x-bind:disabled' => 'processing',
-                                'x-html' => 'processing ? `<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang hủy...</span></div>` : `Hủy`',
+                                'x-html' => 'processing ? `Đang hủy...` : `Hủy`',
                             ]),
                     ])
                     ->visible(function (Profile $record) {
@@ -378,6 +378,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->label('Mã hồ sơ')
                     ->formatStateUsing(function (string $state, $record) {
                         $code = "#{$state}";
+                        
+
                         
                         // Hiển thị icon ổ khóa nếu hồ sơ đang được xem
                         if ($record->isBeingViewed()) {
