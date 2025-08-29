@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Events\ProfileStatusChanged;
+use App\Services\TelegramService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
@@ -50,6 +51,19 @@ class Profile extends Model
                 
                 // Dispatch event
                 event(new ProfileStatusChanged($profile, $oldStatus, $newStatus));
+                
+                // Gửi thông báo Telegram khi hồ sơ bị hủy
+                if ($newStatus === 3) {
+                    try {
+                        $telegramService = app(TelegramService::class);
+                        $telegramService->sendCancelledProfileNotification($profile);
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send Telegram notification for cancelled profile', [
+                            'profile_id' => $profile->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
             }
         });
     }

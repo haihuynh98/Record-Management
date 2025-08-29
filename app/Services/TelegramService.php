@@ -62,9 +62,6 @@ class TelegramService
 👤 <b>ID nhân vật:</b> {$characterId}
 👨‍💼 <b>Người tạo:</b> {$profile->createdBy->username}
 ⏰ <b>Thời gian tạo:</b> {$profile->created_at->format('d/m/Y H:i:s')}
-⏳ <b>Đã chờ:</b> {$timeText}
-
-⚠️ <b>Hồ sơ này đã chờ xử lý quá {$timeText}!</b>
 
 🔗 <b>Link xử lý:</b> " . config('app.url') . "/admin/profiles
         ";
