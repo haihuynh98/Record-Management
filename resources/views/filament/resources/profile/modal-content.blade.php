@@ -41,6 +41,7 @@
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $statusColors[$record->status] }}-100 text-{{ $statusColors[$record->status] }}-800">
                     {{ $statuses[$record->status] }}
                 </span>
+
             </div>
         </div>
         

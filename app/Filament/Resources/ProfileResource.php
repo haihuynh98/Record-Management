@@ -111,6 +111,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         ];
                         return $statuses[$state] ?? 'Chờ duyệt';
                     }),
+
                 Forms\Components\TextInput::make('createdBy.username')
                     ->label('Người tạo')
                     ->disabled()
@@ -150,7 +151,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
             ->defaultSort('created_at', 'desc')
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(50)
-            ->poll('3s')
+            // ->poll('5s')
             ->recordUrl(null)
             ->actions([
                 \Filament\Tables\Actions\Action::make('view')
@@ -379,8 +380,6 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->formatStateUsing(function (string $state, $record) {
                         $code = "#{$state}";
                         
-
-                        
                         // Hiển thị icon ổ khóa nếu hồ sơ đang được xem
                         if ($record->isBeingViewed()) {
                             $viewingUser = $record->viewingUser;
@@ -439,6 +438,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             default => 'warning',
                         };
                     }),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Tạo lúc'),
             ])

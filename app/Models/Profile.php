@@ -20,6 +20,7 @@ class Profile extends Model
         'approved_by',
         'approved_at',
         'status',
+        'status_old',
         'viewing_user_id',
         'viewing_started_at',
         'viewing_session_id',
@@ -27,24 +28,26 @@ class Profile extends Model
 
     protected $casts = [
         'status' => 'integer',
+        'status_old' => 'integer',
         'viewing_started_at' => 'datetime',
     ];
 
     protected static function booted()
     {
+        static::updating(function ($profile) {
+            // Kiểm tra nếu trạng thái đang thay đổi
+            if ($profile->isDirty('status')) {
+                // Lưu trạng thái cũ vào status_old
+                $profile->status_old = $profile->getOriginal('status');
+            }
+        });
+
         static::updated(function ($profile) {
             // Kiểm tra nếu trạng thái đã thay đổi
             if ($profile->wasChanged('status')) {
                 $oldStatus = $profile->getOriginal('status');
                 $newStatus = $profile->status;
                 
-                Log::info('Profile status changed', [
-                    'profile_id' => $profile->id,
-                    'profile_code' => $profile->code,
-                    'old_status' => $oldStatus,
-                    'new_status' => $newStatus
-                ]);
-
                 // Dispatch event
                 event(new ProfileStatusChanged($profile, $oldStatus, $newStatus));
             }
@@ -156,4 +159,6 @@ class Profile extends Model
             return ['success' => false, 'message' => 'Không thể thiết lập session.'];
         }
     }
+
+
 }
