@@ -150,7 +150,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
             ->defaultSort('created_at', 'desc')
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(50)
-            ->poll('5s')
+            ->poll('2s')
             ->recordUrl(null)
             ->actions([
                 \Filament\Tables\Actions\Action::make('view')
@@ -182,10 +182,21 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     })
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Đóng')
-                    ->extraAttributes([
-                        'x-data' => '{ loading: false }',
-                        'x-on:click' => 'loading = true',
-                    ])
+                    ->before(function (Profile $record) {
+                        // Sử dụng method từ model để xử lý session
+                        $result = $record->handleViewSession();
+                        
+                        if (!$result['success']) {
+                            Notification::make()
+                                ->title('Không thể xem hồ sơ')
+                                ->body($result['message'])
+                                ->warning()
+                                ->send();
+                            return false;
+                        }
+                        
+                        return true;
+                    })
                     ->modalActions([
                         \Filament\Tables\Actions\Action::make('approve')
                             ->label('Duyệt')
@@ -264,7 +275,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 'x-data' => '{ processing: false }',
                                 'x-on:click' => 'processing = true',
                                 'x-bind:disabled' => 'processing',
-                                'x-html' => 'processing ? `<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Đang từ chối...</span></div>` : `Từ chối`',
+                                'x-html' => 'processing ? `Đang từ chối...` : `Từ chối`',
                             ]),
                         \Filament\Tables\Actions\Action::make('resubmit')
                             ->label('Nộp lại')
@@ -365,7 +376,19 @@ class ProfileResource extends Resource implements HasShieldPermissions
             ->columns([
                 Tables\Columns\TextColumn::make('code')
                     ->label('Mã hồ sơ')
-                    ->formatStateUsing(fn (string $state): string => "#{$state}")
+                    ->formatStateUsing(function (string $state, $record) {
+                        $code = "#{$state}";
+                        
+                        // Hiển thị icon ổ khóa nếu hồ sơ đang được xem
+                        if ($record->isBeingViewed()) {
+                            $viewingUser = $record->viewingUser;
+                            $tooltip = $viewingUser ? "Đang được xử lý bởi: {$viewingUser->username}" : "Đang được xử lý";
+                            $code .= ' <span class="inline-flex items-center justify-center w-8 h-8 text-lg font-medium text-yellow-600 bg-yellow-100 rounded-full" title="' . $tooltip . '">🔒</span>';
+                        }
+                        
+                        return $code;
+                    })
+                    ->html()
                     ->searchable()
                     ->copyable()
                     ->copyableState(fn (string $state): string => "#{$state}")
