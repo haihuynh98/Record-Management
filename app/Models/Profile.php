@@ -28,23 +28,21 @@ class Profile extends Model
 
     protected static function booted()
     {
-        static::updating(function ($profile) {
-            // Lưu trạng thái cũ trước khi cập nhật
-            $profile->old_status = $profile->getOriginal('status');
-        });
-
         static::updated(function ($profile) {
             // Kiểm tra nếu trạng thái đã thay đổi
-            if (isset($profile->old_status) && $profile->old_status !== $profile->status) {
+            if ($profile->wasChanged('status')) {
+                $oldStatus = $profile->getOriginal('status');
+                $newStatus = $profile->status;
+                
                 Log::info('Profile status changed', [
                     'profile_id' => $profile->id,
                     'profile_code' => $profile->code,
-                    'old_status' => $profile->old_status,
-                    'new_status' => $profile->status
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus
                 ]);
 
                 // Dispatch event
-                event(new ProfileStatusChanged($profile, $profile->old_status, $profile->status));
+                event(new ProfileStatusChanged($profile, $oldStatus, $newStatus));
             }
         });
     }
