@@ -323,8 +323,14 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->title('Đã từ chối hồ sơ')
                                     ->success()
                                     ->send();
-                                    
-                                // Không cần trigger event ở đây vì sẽ dùng JavaScript polling
+                                
+                                // Kiểm tra nếu user không có quyền resubmit hoặc không phải người tạo thì redirect
+                                $user = auth()->user();
+                                $canResubmit = $user->hasPermissionTo('resubmit_profile');
+                                
+                                if (!$canResubmit) {
+                                    return redirect()->to('/admin/profiles');
+                                }
                             }),
                         \Filament\Tables\Actions\Action::make('resubmit')
                             ->label('Nộp lại')
