@@ -59,7 +59,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->prefix('#')
                     ->disabled(function (string $context) {
                         // Disable trong màn hình edit và view
-                        if ($context === 'edit' || $context === 'view') {
+                        if ($context == 'edit' || $context == 'view') {
                             return true;
                         }
                         
@@ -85,7 +85,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->required()
                     ->maxLength(100)
                     ->helperText('Nhập ID nhân vật (cho phép chữ và số)')
-                    ->disabled(fn (string $context) => $context === 'view'),
+                    ->disabled(fn (string $context) => $context == 'view'),
                 Forms\Components\Textarea::make('rejection_reason')
                     ->label('Lý do từ chối')
                     ->placeholder('Nhập lý do từ chối hồ sơ...')
@@ -93,15 +93,15 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->maxLength(500)
                     ->visible(function (string $context, $record) {
                         // Hiển thị ở màn hình edit và view khi status là reject (2)
-                        return ($context === 'edit' || $context === 'view') && $record && $record->status === 2;
+                        return ($context == 'edit' || $context == 'view') && $record && $record->status == 2;
                     })
-                    ->disabled(fn (string $context) => $context === 'view')
+                    ->disabled(fn (string $context) => $context == 'view')
                     ->helperText('Chỉ hiển thị khi hồ sơ bị từ chối'),
                 // Thêm các field thông tin bổ sung cho trang view
                 Forms\Components\TextInput::make('status')
                     ->label('Trạng thái')
                     ->disabled()
-                    ->visible(fn (string $context) => $context === 'view')
+                    ->visible(fn (string $context) => $context == 'view')
                     ->formatStateUsing(function ($state) {
                         $statuses = [
                             0 => 'Chờ duyệt',
@@ -115,15 +115,15 @@ class ProfileResource extends Resource implements HasShieldPermissions
                 Forms\Components\TextInput::make('createdBy.username')
                     ->label('Người tạo')
                     ->disabled()
-                    ->visible(fn (string $context) => $context === 'view'),
+                    ->visible(fn (string $context) => $context == 'view'),
                 Forms\Components\TextInput::make('approvedBy.username')
                     ->label('Người duyệt')
                     ->disabled()
-                    ->visible(fn (string $context, $record) => $context === 'view' && $record && in_array($record->status, [1, 2, 3])),
+                    ->visible(fn (string $context, $record) => $context == 'view' && $record && in_array($record->status, [1, 2, 3])),
                 Forms\Components\TextInput::make('created_at')
                     ->label('Ngày tạo')
                     ->disabled()
-                    ->visible(fn (string $context) => $context === 'view')
+                    ->visible(fn (string $context) => $context == 'view')
                     ->formatStateUsing(function ($state) {
                         if (!$state) return '';
                         if (is_string($state)) {
@@ -134,7 +134,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                 Forms\Components\TextInput::make('approved_at')
                     ->label('Ngày duyệt')
                     ->disabled()
-                    ->visible(fn (string $context, $record) => $context === 'view' && $record && in_array($record->status, [1, 2, 3]))
+                    ->visible(fn (string $context, $record) => $context == 'view' && $record && in_array($record->status, [1, 2, 3]))
                     ->formatStateUsing(function ($state) {
                         if (!$state) return '';
                         if (is_string($state)) {
@@ -211,7 +211,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 $user = auth()->user();
                                 return $record->canBeViewed() && 
                                        $user?->hasPermissionTo('approve_profile') && 
-                                       $record->status === 0;
+                                       $record->status == 0;
                             })
                             ->action(function (Profile $record) {
                                 $user = auth()->user();
@@ -256,7 +256,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 $user = auth()->user();
                                 return $record->canBeViewed() && 
                                        $user?->hasPermissionTo('reject_profile') && 
-                                       $record->status === 0;
+                                       $record->status == 0;
                             })
                             ->action(function (Profile $record, array $data) {
                                 $user = auth()->user();
@@ -297,7 +297,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 
                                 return $record->canBeViewed() && 
                                        $user?->hasPermissionTo('resubmit_profile') && 
-                                       $record->status === 2 && 
+                                       $record->status == 2 && 
                                        ($record->created_by == $user->id || $user->hasRole(['admin', 'super_admin']));
                             })
                             ->action(function (Profile $record) {
@@ -333,7 +333,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 $user = auth()->user();
                                 return $record->canBeViewed() && 
                                        $user?->hasPermissionTo('cancel_profile') && 
-                                       $record->status === 2;
+                                       $record->status == 2;
                             })
                             ->action(function (Profile $record) {
                                 $user = auth()->user();
