@@ -312,7 +312,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 'x-data' => '{ processing: false }',
                                 'x-on:click' => 'processing = true',
                                 'x-bind:disabled' => 'processing',
-                                'x-html' => 'processing ? `<Đang nộp lại...` : `Nộp lại`',
+                                'x-html' => 'processing ? `Đang nộp lại...` : `Nộp lại`',
                             ]),
                         \Filament\Tables\Actions\Action::make('cancel')
                             ->label('Hủy')

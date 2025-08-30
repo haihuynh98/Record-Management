@@ -116,6 +116,17 @@ class TelegramService
      */
     public function sendCancelledProfileNotification($profile)
     {
+        // Kiểm tra xem đã gửi thông báo hủy trong vòng 5 phút qua chưa để tránh spam
+        if ($profile->last_notification_sent_at && 
+            $profile->last_notification_sent_at->diffInMinutes(now()) < 5) {
+            Log::info('Skipped duplicate cancelled notification', [
+                'profile_id' => $profile->id,
+                'profile_code' => $profile->code,
+                'last_sent' => $profile->last_notification_sent_at
+            ]);
+            return false;
+        }
+
         $characterId = $profile->character_id ?: 'Chưa có';
         $approvedAt = $profile->approved_at ? \Carbon\Carbon::parse($profile->approved_at)->format('d/m/Y H:i:s') : 'Chưa có';
         $cancelledBy = $profile->approvedBy ? $profile->approvedBy->username : 'Hệ thống';

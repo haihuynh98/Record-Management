@@ -37,7 +37,6 @@ class HandleProfileStatusChange implements ShouldQueue
 
             // Gửi thông báo Telegram khi hồ sơ bị từ chối (từ chờ xử lý -> từ chối)
             if ($oldStatus === 0 && $newStatus === 2) {
-                SendTelegramNotification::dispatch($profile, 'rejected');
                 
                 // Gửi push notification cho người tạo hồ sơ
                 $notification = Notification::make()
@@ -46,11 +45,6 @@ class HandleProfileStatusChange implements ShouldQueue
                     ->danger()
                     ->icon('heroicon-o-x-circle')
                     ->actions([
-                        Action::make('view_profile')
-                            ->label('Xem hồ sơ')
-                            ->url(config('app.url') . '/admin/profiles')
-                            ->button()
-                            ->markAsRead(),
                         Action::make('mark_as_read')
                             ->label('Đánh dấu đã đọc')
                             ->button()
@@ -65,22 +59,16 @@ class HandleProfileStatusChange implements ShouldQueue
                 ]);
             }
 
-            // Gửi thông báo Telegram khi hồ sơ bị hủy (từ từ chối -> hủy)
-            if ($oldStatus === 2 && $newStatus === 3) {
-                SendTelegramNotification::dispatch($profile, 'cancelled');
+            // Gửi thông báo Telegram khi hồ sơ bị hủy (bất kỳ trạng thái nào -> hủy)
+            if ($newStatus === 3) {
                 
                 // Gửi push notification cho người tạo hồ sơ
                 $notification = Notification::make()
                     ->title('Hồ sơ #' . $profile->code . ' đã bị hủy')
-                    ->body('Hồ sơ của bạn đã bị hủy bởi ' . $profile->approvedBy->username)
+                    ->body('Hồ sơ của bạn đã bị hủy bởi ' . ($profile->approvedBy ? $profile->approvedBy->username : 'Hệ thống'))
                     ->warning()
                     ->icon('heroicon-o-exclamation-triangle')
                     ->actions([
-                        Action::make('view_profile')
-                            ->label('Xem hồ sơ')
-                            ->url(config('app.url') . '/admin/profiles')
-                            ->button()
-                            ->markAsRead(),
                         Action::make('mark_as_read')
                             ->label('Đánh dấu đã đọc')
                             ->button()
@@ -88,6 +76,17 @@ class HandleProfileStatusChange implements ShouldQueue
                     ]);
 
                 $profile->createdBy->notify($notification->toDatabase());
+
+                // Gửi thông báo Telegram
+                try {
+                    $telegramService = app(\App\Services\TelegramService::class);
+                    $telegramService->sendCancelledProfileNotification($profile);
+                } catch (\Exception $e) {
+                    Log::error('Failed to send Telegram notification for cancelled profile', [
+                        'profile_id' => $profile->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
 
                 Log::info('Profile cancelled notification sent', [
                     'profile_id' => $profile->id,

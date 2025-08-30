@@ -37,35 +37,17 @@ class Profile extends Model
 
     protected static function booted()
     {
-        static::updating(function ($profile) {
-            // Kiểm tra nếu trạng thái đang thay đổi
-            if ($profile->isDirty('status')) {
-                // Lưu trạng thái cũ vào status_old
-                $profile->status_old = $profile->getOriginal('status');
-            }
-        });
-
         static::updated(function ($profile) {
             // Kiểm tra nếu trạng thái đã thay đổi
             if ($profile->wasChanged('status')) {
                 $oldStatus = $profile->getOriginal('status');
                 $newStatus = $profile->status;
                 
-                // Dispatch event
-                event(new ProfileStatusChanged($profile, $oldStatus, $newStatus));
+                // Cập nhật status_old mà không trigger thêm event
+                $profile->updateQuietly(['status_old' => $oldStatus]);
                 
-                // Gửi thông báo Telegram khi hồ sơ bị hủy
-                if ($newStatus === 3) {
-                    try {
-                        $telegramService = app(TelegramService::class);
-                        $telegramService->sendCancelledProfileNotification($profile);
-                    } catch (\Exception $e) {
-                        Log::error('Failed to send Telegram notification for cancelled profile', [
-                            'profile_id' => $profile->id,
-                            'error' => $e->getMessage()
-                        ]);
-                    }
-                }
+                // Dispatch event để Listener xử lý thông báo
+                event(new ProfileStatusChanged($profile, $oldStatus, $newStatus));
             }
         });
     }
