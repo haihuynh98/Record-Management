@@ -58,7 +58,7 @@ class PermissionSeeder extends Seeder
 
         // Create permissions for Dashboard Charts
         $dashboardChartPermissions = [
-            'view_dashboard_charts',
+            'widget_StatsOverview',
         ];
 
         $allPermissions = array_merge($profilePermissions, $userPermissions, $rolePermissions, $profileStatisticsPermissions, $dashboardChartPermissions);
@@ -100,7 +100,7 @@ class PermissionSeeder extends Seeder
             // Profile Statistics permissions
             'view_profile_statistics',
             // Dashboard Charts permissions
-            'view_dashboard_charts',
+            'widget_StatsOverview',
         ]);
 
         $approver = Role::firstOrCreate(['name' => 'approver']);

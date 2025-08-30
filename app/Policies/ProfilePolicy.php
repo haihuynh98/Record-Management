@@ -105,30 +105,4 @@ class ProfilePolicy
     {
         return $user->can('{{ Reorder }}');
     }
-
-    /**
-     * Determine whether the user can approve the profile.
-     */
-    public function approve(User $user, Profile $profile): bool
-    {
-        return $user->hasPermissionTo('approve_profile') && $profile->status === 0;
-    }
-
-    /**
-     * Determine whether the user can reject the profile.
-     */
-    public function reject(User $user, Profile $profile): bool
-    {
-        return $user->hasPermissionTo('reject_profile') && $profile->status === 0;
-    }
-
-    /**
-     * Determine whether the user can resubmit the profile.
-     */
-    public function resubmit(User $user, Profile $profile): bool
-    {
-        return $user->hasPermissionTo('resubmit_profile') && 
-               $profile->status === 2 && 
-               $profile->created_by === $user->id;
-    }
 }

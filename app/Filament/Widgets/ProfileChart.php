@@ -13,7 +13,7 @@ class ProfileChart extends ChartWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->can('view_dashboard_charts');
+        return auth()->user()->can('widget_ProfileChart');
     }
 
     protected function getData(): array

@@ -69,7 +69,7 @@
         </div>
 
         <!-- Widgets - Only show if user has permission -->
-        @if(auth()->user()->can('view_dashboard_charts'))
+        @if(auth()->user()->can('widget_StatsOverview'))
             <div class="space-y-6">
                 {{ $this->widgets['stats-overview'] }}
                 {{ $this->widgets['profile-chart'] }}

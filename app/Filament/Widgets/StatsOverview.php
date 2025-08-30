@@ -12,7 +12,7 @@ class StatsOverview extends BaseWidget
 {
     public static function canView(): bool
     {
-        return auth()->user()->can('view_dashboard_charts');
+        return auth()->user()->can('widget_StatsOverview');
     }
 
     protected function getStats(): array
