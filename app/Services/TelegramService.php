@@ -58,15 +58,21 @@ class TelegramService
 
 {$priorityText}
 
-📋 <b>Mã hồ sơ:</b> #{$profile->code}
+📋 <b>Mã hồ sơ:</b> <code>#{$profile->code}</code>
 👤 <b>ID nhân vật:</b> {$characterId}
 👨‍💼 <b>Người tạo:</b> {$profile->createdBy->username}
 ⏰ <b>Thời gian tạo:</b> {$profile->created_at->format('d/m/Y H:i:s')}
 
-🔗 <b>Link xử lý:</b> " . config('app.url') . "/admin/profiles
         ";
 
-        return $this->sendMessage(config('services.telegram.chat_id'), $message);
+        $result = $this->sendMessage(config('services.telegram.chat_id'), $message);
+        
+        // Cập nhật thời gian gửi notification cuối cùng nếu gửi thành công
+        if ($result) {
+            $profile->update(['last_notification_sent_at' => now()]);
+        }
+        
+        return $result;
     }
 
     /**
@@ -77,23 +83,32 @@ class TelegramService
         $characterId = $profile->character_id ?: 'Chưa có';
         $rejectionReason = $profile->rejection_reason ?: 'Không có lý do';
         $approvedAt = $profile->approved_at ? \Carbon\Carbon::parse($profile->approved_at)->format('d/m/Y H:i:s') : 'Chưa có';
+        $rejectedBy = $profile->approvedBy ? $profile->approvedBy->username : 'Hệ thống';
+        $createdBy = $profile->createdBy ? $profile->createdBy->username : 'Không xác định';
         
         $message = "
 ❌ <b>THÔNG BÁO HỒ SƠ BỊ TỪ CHỐI</b> ❌
 
-📋 <b>Mã hồ sơ:</b> #{$profile->code}
+📋 <b>Mã hồ sơ:</b> <code>#{$profile->code}</code>
 👤 <b>ID nhân vật:</b> {$characterId}
-👨‍💼 <b>Người tạo:</b> {$profile->createdBy->username}
-👨‍⚖️ <b>Người duyệt:</b> {$profile->approvedBy->username}
+👨‍💼 <b>Người tạo:</b> {$createdBy}
+👨‍⚖️ <b>Người duyệt:</b> {$rejectedBy}
 ⏰ <b>Thời gian từ chối:</b> {$approvedAt}
 
 📝 <b>Lý do từ chối:</b>
 {$rejectionReason}
 
-🔗 <b>Link xem chi tiết:</b> " . config('app.url') . "/admin/profiles
+
         ";
 
-        return $this->sendMessage(config('services.telegram.chat_id'), $message);
+        $result = $this->sendMessage(config('services.telegram.chat_id'), $message);
+        
+        // Cập nhật thời gian gửi notification cuối cùng nếu gửi thành công
+        if ($result) {
+            $profile->update(['last_notification_sent_at' => now()]);
+        }
+        
+        return $result;
     }
 
     /**
@@ -103,19 +118,68 @@ class TelegramService
     {
         $characterId = $profile->character_id ?: 'Chưa có';
         $approvedAt = $profile->approved_at ? \Carbon\Carbon::parse($profile->approved_at)->format('d/m/Y H:i:s') : 'Chưa có';
+        $cancelledBy = $profile->approvedBy ? $profile->approvedBy->username : 'Hệ thống';
+        $createdBy = $profile->createdBy ? $profile->createdBy->username : 'Không xác định';
         
         $message = "
 🚫 <b>THÔNG BÁO HỒ SƠ BỊ HỦY</b> 🚫
 
-📋 <b>Mã hồ sơ:</b> #{$profile->code}
+📋 <b>Mã hồ sơ:</b> <code>#{$profile->code}</code>
 👤 <b>ID nhân vật:</b> {$characterId}
-👨‍💼 <b>Người tạo:</b> {$profile->createdBy->username}
-👨‍⚖️ <b>Người hủy:</b> {$profile->approvedBy->username}
+👨‍💼 <b>Người tạo:</b> {$createdBy}
+👨‍⚖️ <b>Người hủy:</b> {$cancelledBy}
 ⏰ <b>Thời gian hủy:</b> {$approvedAt}
 
-🔗 <b>Link xem chi tiết:</b> " . config('app.url') . "/admin/profiles
+
         ";
 
-        return $this->sendMessage(config('services.telegram.chat_id'), $message);
+        $result = $this->sendMessage(config('services.telegram.chat_id'), $message);
+        
+        // Cập nhật thời gian gửi notification cuối cùng nếu gửi thành công
+        if ($result) {
+            $profile->update(['last_notification_sent_at' => now()]);
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Gửi thông báo nhắc nhở xử lý hồ sơ
+     */
+    public function sendRemindProcessNotification($profile)
+    {
+        $characterId = $profile->character_id ?: 'Chưa có';
+        $createdBy = $profile->createdBy ? $profile->createdBy->username : 'Không xác định';
+        
+        // Tính thời gian đã trôi qua
+        $createdAt = \Carbon\Carbon::parse($profile->created_at);
+        $now = \Carbon\Carbon::now();
+        $timeElapsed = $createdAt->diffForHumans($now, true);
+        
+        // Kiểm tra xem đã gửi notification bao nhiêu lần
+        $isFirstReminder = is_null($profile->last_notification_sent_at);
+        $reminderText = $isFirstReminder ? 'LẦN ĐẦU' : 'NHẮC LẠI';
+        
+        $message = "
+🔔 <b>NHẮC NHỞ XỬ LÝ HỒ SƠ - {$reminderText}</b> 🔔
+
+
+📋 <b>Mã hồ sơ:</b> <code>#{$profile->code}</code>
+👤 <b>ID nhân vật:</b> {$characterId}
+👨‍💼 <b>Người tạo:</b> {$createdBy}
+⏰ <b>Thời gian tạo:</b> {$profile->created_at->format('d/m/Y H:i:s')}
+
+💡 <i>Hồ sơ này đang chờ xử lý, vui lòng kiểm tra và xử lý sớm nhất có thể!</i>
+
+        ";
+
+        $result = $this->sendMessage(config('services.telegram.chat_id'), $message);
+        
+        // Cập nhật thời gian gửi notification cuối cùng nếu gửi thành công
+        if ($result) {
+            $profile->update(['last_notification_sent_at' => now()]);
+        }
+        
+        return $result;
     }
 }

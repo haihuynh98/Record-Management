@@ -25,12 +25,14 @@ class Profile extends Model
         'viewing_user_id',
         'viewing_started_at',
         'viewing_session_id',
+        'last_notification_sent_at',
     ];
 
     protected $casts = [
         'status' => 'integer',
         'status_old' => 'integer',
         'viewing_started_at' => 'datetime',
+        'last_notification_sent_at' => 'datetime',
     ];
 
     protected static function booted()

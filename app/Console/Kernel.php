@@ -17,6 +17,12 @@ class Kernel extends ConsoleKernel
             ->everyFiveMinutes()
             ->withoutOverlapping()
             ->runInBackground();
+
+        // Chạy nhắc nhở xử lý hồ sơ mỗi 5 phút
+        $schedule->command('profile:remind-process')
+            ->everyFiveMinutes()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**
