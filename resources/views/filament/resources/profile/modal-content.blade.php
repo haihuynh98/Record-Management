@@ -166,7 +166,39 @@ window.addEventListener('beforeunload', function() {
         }
     });
 });
+
+// Không cần Livewire events, chỉ dùng polling mechanism
 @endif
+
+// Force close modal khi status changed (for production)
+const originalStatus = {{ $record->status }};
+const checkStatusChange = setInterval(() => {
+    fetch('/admin/profiles/{{ $record->id }}/status', {
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status !== originalStatus) {
+            clearInterval(checkStatusChange);
+            // Status changed, close modal
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        }
+    })
+    .catch(error => {
+        console.log('Status check error:', error);
+    });
+}, 2000); // Check every 2 seconds
+
+// Clean up interval when modal closes
+window.addEventListener('beforeunload', function() {
+    clearInterval(checkStatusChange);
+});
 </script>
 
 

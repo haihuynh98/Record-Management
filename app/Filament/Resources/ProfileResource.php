@@ -168,6 +168,11 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         // Refresh record để có dữ liệu mới nhất
                         $record->refresh();
                         
+                        // Clear cache để tránh stale data trong production
+                        if (app()->environment('production')) {
+                            \Cache::forget("profile_{$record->id}");
+                        }
+                        
                         // Chỉ check session cho hồ sơ chờ duyệt (status = 0)
                         if ($record->status == 0) {
                             $result = $record->handleViewSession();
@@ -228,6 +233,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 // Chỉ check permissions và status, không gọi handleViewSession ở đây
                                 return $user->hasPermissionTo('approve_profile') && $record->status == 0;
                             })
+
                             ->action(function (?Profile $record) {
                                 if (!$record) {
                                     Notification::make()
@@ -264,8 +270,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->success()
                                     ->send();
                                     
-                                // Force close và refresh modal
-                                return redirect()->back();
+                                // Không cần trigger event ở đây vì sẽ dùng JavaScript polling
                             }),
                         \Filament\Tables\Actions\Action::make('reject')
                             ->label('Từ chối')
@@ -338,8 +343,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->success()
                                     ->send();
                                     
-                                // Force close và refresh modal
-                                return redirect()->back();
+                                // Không cần trigger event ở đây vì sẽ dùng JavaScript polling
                             }),
                         \Filament\Tables\Actions\Action::make('resubmit')
                             ->label('Nộp lại')
@@ -442,8 +446,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->success()
                                     ->send();
                                     
-                                // Force close và refresh modal
-                                return redirect()->back();
+                                // Không cần trigger event ở đây vì sẽ dùng JavaScript polling
                             }),
                     ])
                     ->visible(function (?Profile $record) {

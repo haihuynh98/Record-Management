@@ -41,3 +41,17 @@ Route::post('/admin/profiles/{id}/clear-session', function ($id, Request $reques
         'message' => $result ? 'Session cleared successfully' : 'Session not cleared'
     ]);
 })->middleware(['web', 'auth']);
+
+// Route để check status của profile (for modal refresh detection)
+Route::get('/admin/profiles/{id}/status', function ($id) {
+    $profile = Profile::find($id);
+    
+    if (!$profile) {
+        return response()->json(['error' => 'Profile not found'], 404);
+    }
+    
+    return response()->json([
+        'status' => $profile->status,
+        'updated_at' => $profile->updated_at
+    ]);
+})->middleware(['web', 'auth']);
