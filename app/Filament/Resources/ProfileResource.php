@@ -262,23 +262,10 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             ])
                             ->visible(function (Profile $record) {
                                 $user = auth()->user();
-                                $canBeViewed = $record->canBeViewed();
-                                $hasPermission = $user?->hasPermissionTo('reject_profile');
-                                $correctStatus = $record->status == 0;
-                                
-                                // Debug log cho production
-                                \Log::info('Reject button visibility check', [
-                                    'profile_code' => $record->code,
-                                    'user_id' => $user?->id,
-                                    'canBeViewed' => $canBeViewed,
-                                    'hasPermission' => $hasPermission,
-                                    'correctStatus' => $correctStatus,
-                                    'status' => $record->status,
-                                    'viewing_user_id' => $record->viewing_user_id,
-                                    'is_being_viewed' => $record->isBeingViewed(),
-                                ]);
-                                
-                                return $canBeViewed && $hasPermission && $correctStatus;
+
+                                $result = $record->handleViewSession();
+                               return $result['success'] && $user?->hasPermissionTo('reject_profile');
+                            
                             })
                             ->action(function (Profile $record, array $data) {
                                 $user = auth()->user();
@@ -311,9 +298,9 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             ->visible(function (Profile $record) {
                                 $user = auth()->user();
                                 
-                                return $record->canBeViewed() && 
+                                return $record->canBeInteracted() && 
                                        $user?->hasPermissionTo('resubmit_profile') && 
-                                       $record->status == 2 && 
+                                       $record->status === 2 && 
                                        ($record->created_by == $user->id || $user->hasRole(['admin', 'super_admin']));
                             })
                             ->action(function (Profile $record) {
@@ -341,9 +328,9 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             ->modalCancelActionLabel('Không, giữ lại')
                             ->visible(function (Profile $record) {
                                 $user = auth()->user();
-                                return $record->canBeViewed() && 
+                                return $record->canBeInteracted() && 
                                        $user?->hasPermissionTo('cancel_profile') && 
-                                       $record->status == 2;
+                                       $record->status === 2;
                             })
                             ->action(function (Profile $record) {
                                 $user = auth()->user();

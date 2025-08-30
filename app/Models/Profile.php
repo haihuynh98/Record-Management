@@ -149,12 +149,33 @@ class Profile extends Model
             return false;
         }
         
-        // Nếu hồ sơ đang được xem bởi người khác
+        // Nếu hồ sơ đang được xem bởi người khác (không phải user hiện tại)
         if ($this->isBeingViewed() && !$this->isBeingViewedBy($user->id)) {
             return false;
         }
         
+        // Nếu user đang xem chính hồ sơ này hoặc không ai xem thì OK
         return true;
+    }
+
+    /**
+     * Kiểm tra có thể thao tác với hồ sơ không (cho action buttons)
+     */
+    public function canBeInteracted(): bool
+    {
+        $user = auth()->user();
+        
+        if (!$user) {
+            return false;
+        }
+        
+        // Nếu không ai đang xem HOẶC chính user này đang xem → Có thể thao tác
+        if (!$this->isBeingViewed() || $this->isBeingViewedBy($user->id)) {
+            return true;
+        }
+        
+        // Nếu có người khác đang xem → Không thể thao tác
+        return false;
     }
 
     /**
