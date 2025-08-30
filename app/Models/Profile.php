@@ -126,30 +126,65 @@ class Profile extends Model
     }
 
     /**
+     * Clear tất cả session viewing của một user
+     */
+    public static function clearAllViewingSessionsByUser(int $userId): int
+    {
+        return self::where('viewing_user_id', $userId)
+            ->update([
+                'viewing_user_id' => null,
+                'viewing_started_at' => null,
+                'viewing_session_id' => null,
+            ]);
+    }
+
+    /**
+     * Kiểm tra có thể xem hồ sơ không (không set session)
+     */
+    public function canBeViewed(): bool
+    {
+        $user = auth()->user();
+        
+        if (!$user) {
+            return false;
+        }
+        
+        // Nếu hồ sơ đang được xem bởi người khác
+        if ($this->isBeingViewed() && !$this->isBeingViewedBy($user->id)) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    /**
      * Xử lý session khi mở modal xem hồ sơ
      */
     public function handleViewSession(): array
-    {
+    {   
         $user = auth()->user();
         
         if (!$user) {
             return ['success' => false, 'message' => 'Bạn cần đăng nhập để thực hiện hành động này.'];
         }
         
-
+        // Clear tất cả session cũ của user này trước
+        $clearedCount = self::clearAllViewingSessionsByUser($user->id);
         
-        // Nếu hồ sơ đang được xem bởi người khác
+        // Refresh để có dữ liệu mới nhất
+        $this->refresh();
+        
+        // Nếu hồ sơ đang được xem bởi người khác (sau khi đã clear session của user hiện tại)
         if ($this->isBeingViewed() && !$this->isBeingViewedBy($user->id)) {
             $viewingUser = $this->viewingUser;
             $message = $viewingUser ? "Hồ sơ này đang được xử lý bởi {$viewingUser->username}" : "Hồ sơ này đang được xử lý bởi người khác";
+           
             return ['success' => false, 'message' => $message];
         }
         
-        // Thiết lập session xem hồ sơ
+        // Thiết lập session xem hồ sơ mới
         $sessionId = \Illuminate\Support\Str::uuid()->toString();
         $result = $this->setViewingSession($user->id, $sessionId);
-        
-
         
         if ($result) {
             return ['success' => true, 'message' => 'Session đã được thiết lập thành công.'];
