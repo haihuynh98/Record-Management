@@ -157,10 +157,13 @@ class ProfileResource extends Resource implements HasShieldPermissions
                 \Filament\Tables\Actions\Action::make('view')
                     ->label('Xem chi tiết')
                     ->icon('heroicon-o-eye')
-                    ->modalHeading(function (Profile $record) {
-                        return 'Chi tiết hồ sơ #' . $record->code;
+                    ->modalHeading(function (?Profile $record) {
+                        return $record ? 'Chi tiết hồ sơ #' . $record->code : 'Chi tiết hồ sơ';
                     })
-                    ->modalContent(function (Profile $record) {
+                    ->modalContent(function (?Profile $record) {
+                        if (!$record) {
+                            return '<div class="p-4 text-center text-gray-500">Không thể tải thông tin hồ sơ</div>';
+                        }
                         // Chỉ check session cho hồ sơ chưa duyệt
                         if ($record->status !== 1) {
                             $result = $record->handleViewSession();
@@ -203,8 +206,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             ->color('success')
                             ->requiresConfirmation()
                             ->modalHeading('Xác nhận duyệt hồ sơ')
-                            ->modalDescription(function (Profile $record) {
-                                return 'Bạn có chắc chắn muốn duyệt hồ sơ #' . $record->code . '?';
+                            ->modalDescription(function (?Profile $record) {
+                                return $record ? 'Bạn có chắc chắn muốn duyệt hồ sơ #' . $record->code . '?' : 'Bạn có chắc chắn muốn duyệt hồ sơ?';
                             })
                             ->modalSubmitActionLabel('Có, duyệt hồ sơ')
                             ->modalCancelActionLabel('Không, hủy bỏ')
@@ -221,7 +224,16 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 // Chỉ check permissions và status, không gọi handleViewSession ở đây
                                 return $user->hasPermissionTo('approve_profile') && $record->status === 0;
                             })
-                            ->action(function (Profile $record) {
+                            ->action(function (?Profile $record) {
+                                if (!$record) {
+                                    Notification::make()
+                                        ->title('Lỗi')
+                                        ->body('Không thể tìm thấy hồ sơ')
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
+                                
                                 $user = auth()->user();
                                 
                                 // Kiểm tra lại session trước khi thực hiện action
@@ -251,8 +263,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             ->color('danger')
                             ->requiresConfirmation()
                             ->modalHeading('Xác nhận từ chối hồ sơ')
-                            ->modalDescription(function (Profile $record) {
-                                return 'Bạn có chắc chắn muốn từ chối hồ sơ #' . $record->code . '?';
+                            ->modalDescription(function (?Profile $record) {
+                                return $record ? 'Bạn có chắc chắn muốn từ chối hồ sơ #' . $record->code . '?' : 'Bạn có chắc chắn muốn từ chối hồ sơ?';
                             })
                             ->modalSubmitActionLabel('Có, từ chối hồ sơ')
                             ->modalCancelActionLabel('Không, hủy bỏ')
@@ -277,7 +289,16 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 // Chỉ check permissions và status, không gọi handleViewSession ở đây
                                 return $user->hasPermissionTo('reject_profile') && $record->status === 0;
                             })
-                            ->action(function (Profile $record, array $data) {
+                            ->action(function (?Profile $record, array $data) {
+                                if (!$record) {
+                                    Notification::make()
+                                        ->title('Lỗi')
+                                        ->body('Không thể tìm thấy hồ sơ')
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
+                                
                                 $user = auth()->user();
                                 
                                 // Kiểm tra lại session trước khi thực hiện action
@@ -310,8 +331,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             ->color('warning')
                             ->requiresConfirmation()
                             ->modalHeading('Xác nhận nộp lại hồ sơ')
-                            ->modalDescription(function (Profile $record) {
-                                return 'Bạn có chắc chắn muốn nộp lại hồ sơ #' . $record->code . '?';
+                            ->modalDescription(function (?Profile $record) {
+                                return $record ? 'Bạn có chắc chắn muốn nộp lại hồ sơ #' . $record->code . '?' : 'Bạn có chắc chắn muốn nộp lại hồ sơ?';
                             })
                             ->modalSubmitActionLabel('Có, nộp lại')
                             ->modalCancelActionLabel('Không, hủy bỏ')
@@ -329,7 +350,16 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                        $record->status === 2 && 
                                        ($record->created_by == $user->id || $user->hasRole(['admin', 'super_admin']));
                             })
-                            ->action(function (Profile $record) {
+                            ->action(function (?Profile $record) {
+                                if (!$record) {
+                                    Notification::make()
+                                        ->title('Lỗi')
+                                        ->body('Không thể tìm thấy hồ sơ')
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
+                                
                                 $record->update([
                                     'status' => 0, // Chờ duyệt
                                     'rejection_reason' => null, // Xóa lý do từ chối
@@ -347,8 +377,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             ->color('gray')
                             ->requiresConfirmation()
                             ->modalHeading('Xác nhận hủy hồ sơ')
-                            ->modalDescription(function (Profile $record) {
-                                return 'Bạn có chắc chắn muốn hủy hồ sơ #' . $record->code . '? Hành động này không thể hoàn tác.';
+                            ->modalDescription(function (?Profile $record) {
+                                return $record ? 'Bạn có chắc chắn muốn hủy hồ sơ #' . $record->code . '? Hành động này không thể hoàn tác.' : 'Bạn có chắc chắn muốn hủy hồ sơ? Hành động này không thể hoàn tác.';
                             })
                             ->modalSubmitActionLabel('Có, hủy hồ sơ')
                             ->modalCancelActionLabel('Không, giữ lại')
@@ -364,7 +394,16 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 
                                 return $user->hasPermissionTo('cancel_profile') && $record->status === 2;
                             })
-                            ->action(function (Profile $record) {
+                            ->action(function (?Profile $record) {
+                                if (!$record) {
+                                    Notification::make()
+                                        ->title('Lỗi')
+                                        ->body('Không thể tìm thấy hồ sơ')
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
+                                
                                 $user = auth()->user();
                                 
                                 $record->update([
@@ -382,7 +421,11 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->send();
                             }),
                     ])
-                    ->visible(function (Profile $record) {
+                    ->visible(function (?Profile $record) {
+                        if (!$record) {
+                            return false;
+                        }
+                        
                         $user = auth()->user();
                         
                         if (!$user) return false;
