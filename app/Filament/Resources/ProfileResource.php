@@ -267,6 +267,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     'approved_by' => $user->id,
                                 ]);
 
+                                // Chỉ hiển thị toast notification cho người thực hiện hành động
+                                // Database notification sẽ được gửi qua Listener cho người tạo hồ sơ
                                 Notification::make()
                                     ->title('Đã từ chối hồ sơ')
                                     ->success()
@@ -338,6 +340,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     'approved_by' => $user->id,
                                 ]);
 
+                                // Chỉ hiển thị toast notification cho người thực hiện hành động
+                                // Database notification sẽ được gửi qua Listener cho người tạo hồ sơ
                                 Notification::make()
                                     ->title('Đã hủy hồ sơ')
                                     ->body('Hồ sơ #' . $record->code . ' đã được hủy thành công.')
