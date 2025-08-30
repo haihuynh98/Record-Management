@@ -38,6 +38,11 @@ class RemindProcessProfile extends Command
     public function handle()
     {
         $this->info('Bắt đầu kiểm tra các hồ sơ cần nhắc nhở xử lý...');
+        
+        // Optional: Enable debug mode
+        // $this->info('Debug: Default timezone = ' . date_default_timezone_get());
+        // $this->info('Debug: App timezone = ' . config('app.timezone'));
+        // $this->info('Debug: Current time = ' . Carbon::now()->toDateTimeString());
 
         // Tìm các profile có trạng thái đang chờ xử lý (status = 0) và được tạo trong ngày hôm nay
         $pendingProfiles = Profile::with(['createdBy'])
@@ -80,32 +85,48 @@ class RemindProcessProfile extends Command
     {
         $now = Carbon::now();
         
+        $this->info("Debug thời gian: Now = {$now->toDateTimeString()}");
+        
         // Case 1: Chưa từng gửi notification (last_notification_sent_at = null)
         if (is_null($profile->last_notification_sent_at)) {
             $this->info("Hồ sơ #{$profile->code} có last_notification_sent_at = null");
             $createdAt = Carbon::parse($profile->created_at);
+            
+            $this->info("Debug: created_at = {$createdAt->toDateTimeString()}");
 
             // Kiểm tra người tạo có phải là priority user không
             $isPriorityUser = $profile->createdBy && $profile->createdBy->is_priority;
+            $this->info("Debug: isPriorityUser = " . ($isPriorityUser ? 'true' : 'false'));
 
-            $minutesSinceCreated = $now->diffInMinutes($createdAt);
+            // Sử dụng diffInRealMinutes để tránh vấn đề timezone
+            $minutesSinceCreated = $createdAt->diffInRealMinutes($now);
             $this->info("Hồ sơ #{$profile->code} đã được tạo cách đây {$minutesSinceCreated} phút.");
-
+            
             if ($isPriorityUser) {
                 // Nếu là priority user, kiểm tra đã qua 15 phút chưa
-                return $minutesSinceCreated >= 15;
+                $shouldSend = $minutesSinceCreated >= 15;
+                $this->info("Priority user: {$minutesSinceCreated} >= 15? " . ($shouldSend ? 'YES' : 'NO'));
+                return $shouldSend;
             } else {
                 // Nếu không phải priority user, kiểm tra đã qua 2 giờ chưa
-                return $now->diffInHours($createdAt) >= 2;
+                $hoursSinceCreated = $createdAt->diffInRealHours($now);
+                $shouldSend = $hoursSinceCreated >= 2;
+                $this->info("Normal user: {$hoursSinceCreated} hours >= 2? " . ($shouldSend ? 'YES' : 'NO'));
+                return $shouldSend;
             }
         }
 
         // Case 2: Đã từng gửi notification (last_notification_sent_at có giá trị)
         $lastNotificationAt = Carbon::parse($profile->last_notification_sent_at);
-        $minutesSinceLastNotification = $now->diffInMinutes($lastNotificationAt);
+        $this->info("Debug: last_notification_sent_at = {$lastNotificationAt->toDateTimeString()}");
+        
+        // Sử dụng diffInRealMinutes để tránh vấn đề timezone
+        $minutesSinceLastNotification = $lastNotificationAt->diffInRealMinutes($now);
         $this->info("Hồ sơ #{$profile->code} đã gửi nhắc nhở lần cuối cách đây {$minutesSinceLastNotification} phút.");
 
         // Kiểm tra đã qua 15 phút kể từ lần gửi cuối cùng
-        return $minutesSinceLastNotification >= 15;
+        $shouldSend = $minutesSinceLastNotification >= 15;
+        $this->info("Last notification: {$minutesSinceLastNotification} >= 15? " . ($shouldSend ? 'YES' : 'NO'));
+        return $shouldSend;
     }
 }
