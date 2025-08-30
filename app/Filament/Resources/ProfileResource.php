@@ -246,16 +246,6 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 
                                 $user = auth()->user();
                                 
-                                // Kiểm tra lại session trước khi thực hiện action
-                                if (!$record->canBeInteracted()) {
-                                    Notification::make()
-                                        ->title('Không thể thực hiện')
-                                        ->body('Hồ sơ đang được xử lý bởi người khác')
-                                        ->warning()
-                                        ->send();
-                                    return;
-                                }
-                                
                                 $record->update([
                                     'status' => 1, // Đã duyệt
                                     'approved_at' => now(),
@@ -315,16 +305,6 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 }
                                 
                                 $user = auth()->user();
-                                
-                                // Kiểm tra lại session trước khi thực hiện action
-                                if (!$record->canBeInteracted()) {
-                                    Notification::make()
-                                        ->title('Không thể thực hiện')
-                                        ->body('Hồ sơ đang được xử lý bởi người khác')
-                                        ->warning()
-                                        ->send();
-                                    return;
-                                }
                                 
                                 $record->update([
                                     'status' => 2, // Từ chối
