@@ -161,7 +161,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         return 'Chi tiết hồ sơ #' . $record->code;
                     })
                     ->modalContent(function (Profile $record) {
-                        if ($record->status != 1) {
+                        // Chỉ check session cho hồ sơ chưa duyệt
+                        if ($record->status !== 1) {
                             $result = $record->handleViewSession();
                             
                             if (!$result['success']) {
@@ -207,13 +208,31 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             })
                             ->modalSubmitActionLabel('Có, duyệt hồ sơ')
                             ->modalCancelActionLabel('Không, hủy bỏ')
-                            ->visible(function (Profile $record) {
+                            ->visible(function (?Profile $record) {
+                                if (!$record) {
+                                    return false;
+                                }
+                                
                                 $user = auth()->user();
-                                $result = $record->handleViewSession();
-                                return $result['success'] && $user?->hasPermissionTo('approve_profile');
+                                if (!$user) {
+                                    return false;
+                                }
+                                
+                                // Chỉ check permissions và status, không gọi handleViewSession ở đây
+                                return $user->hasPermissionTo('approve_profile') && $record->status === 0;
                             })
                             ->action(function (Profile $record) {
                                 $user = auth()->user();
+                                
+                                // Kiểm tra lại session trước khi thực hiện action
+                                if (!$record->canBeInteracted()) {
+                                    Notification::make()
+                                        ->title('Không thể thực hiện')
+                                        ->body('Hồ sơ đang được xử lý bởi người khác')
+                                        ->warning()
+                                        ->send();
+                                    return;
+                                }
                                 
                                 $record->update([
                                     'status' => 1, // Đã duyệt
@@ -245,15 +264,31 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->minLength(10)
                                     ->maxLength(500),
                             ])
-                            ->visible(function (Profile $record) {
+                                                        ->visible(function (?Profile $record) {
+                                if (!$record) {
+                                    return false;
+                                }
+                                
                                 $user = auth()->user();
-
-                                $result = $record->handleViewSession();
-                               return $result['success'] && $user?->hasPermissionTo('reject_profile');
-                            
+                                if (!$user) {
+                                    return false;
+                                }
+                                
+                                // Chỉ check permissions và status, không gọi handleViewSession ở đây
+                                return $user->hasPermissionTo('reject_profile') && $record->status === 0;
                             })
                             ->action(function (Profile $record, array $data) {
                                 $user = auth()->user();
+                                
+                                // Kiểm tra lại session trước khi thực hiện action
+                                if (!$record->canBeInteracted()) {
+                                    Notification::make()
+                                        ->title('Không thể thực hiện')
+                                        ->body('Hồ sơ đang được xử lý bởi người khác')
+                                        ->warning()
+                                        ->send();
+                                    return;
+                                }
                                 
                                 $record->update([
                                     'status' => 2, // Từ chối
@@ -280,10 +315,19 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             })
                             ->modalSubmitActionLabel('Có, nộp lại')
                             ->modalCancelActionLabel('Không, hủy bỏ')
-                            ->visible(function (Profile $record) {
+                            ->visible(function (?Profile $record) {
+                                if (!$record) {
+                                    return false;
+                                }
+                                
                                 $user = auth()->user();
-                                $result = $record->handleViewSession();
-                                return $result['success'] && $record->status == 2 && $user?->hasPermissionTo('resubmit_profile') &&  ($record->created_by == $user->id || $user->hasRole(['admin', 'super_admin']));
+                                if (!$user) {
+                                    return false;
+                                }
+                                
+                                return $user->hasPermissionTo('resubmit_profile') && 
+                                       $record->status === 2 && 
+                                       ($record->created_by == $user->id || $user->hasRole(['admin', 'super_admin']));
                             })
                             ->action(function (Profile $record) {
                                 $record->update([
@@ -308,11 +352,17 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             })
                             ->modalSubmitActionLabel('Có, hủy hồ sơ')
                             ->modalCancelActionLabel('Không, giữ lại')
-                            ->visible(function (Profile $record) {
+                            ->visible(function (?Profile $record) {
+                                if (!$record) {
+                                    return false;
+                                }
+                                
                                 $user = auth()->user();
-                                $result = $record->handleViewSession();
-                                return $result['success'] && $user?->hasPermissionTo('cancel_profile') && 
-                                $record->status == 2;
+                                if (!$user) {
+                                    return false;
+                                }
+                                
+                                return $user->hasPermissionTo('cancel_profile') && $record->status === 2;
                             })
                             ->action(function (Profile $record) {
                                 $user = auth()->user();
