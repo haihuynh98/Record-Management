@@ -164,8 +164,12 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         if (!$record) {
                             return new \Illuminate\Support\HtmlString('<div class="p-4 text-center text-gray-500">Không thể tải thông tin hồ sơ</div>');
                         }
-                        // Chỉ check session cho hồ sơ chưa duyệt
-                        if ($record->status !== 1) {
+                        
+                        // Refresh record để có dữ liệu mới nhất
+                        $record->refresh();
+                        
+                        // Chỉ check session cho hồ sơ chờ duyệt (status = 0)
+                        if ($record->status == 0) {
                             $result = $record->handleViewSession();
                             
                             if (!$result['success']) {
@@ -222,7 +226,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 }
                                 
                                 // Chỉ check permissions và status, không gọi handleViewSession ở đây
-                                return $user->hasPermissionTo('approve_profile') && $record->status === 0;
+                                return $user->hasPermissionTo('approve_profile') && $record->status == 0;
                             })
                             ->action(function (?Profile $record) {
                                 if (!$record) {
@@ -252,10 +256,16 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     'approved_by' => $user->id,
                                 ]);
 
+                                // Clear viewing session sau khi approve
+                                $record->clearViewingSession();
+
                                 Notification::make()
                                     ->title('Đã duyệt hồ sơ')
                                     ->success()
                                     ->send();
+                                    
+                                // Force close và refresh modal
+                                return redirect()->back();
                             }),
                         \Filament\Tables\Actions\Action::make('reject')
                             ->label('Từ chối')
@@ -287,7 +297,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 }
                                 
                                 // Chỉ check permissions và status, không gọi handleViewSession ở đây
-                                return $user->hasPermissionTo('reject_profile') && $record->status === 0;
+                                return $user->hasPermissionTo('reject_profile') && $record->status == 0;
                             })
                             ->action(function (?Profile $record, array $data) {
                                 if (!$record) {
@@ -318,12 +328,18 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     'approved_by' => $user->id,
                                 ]);
 
+                                // Clear viewing session sau khi reject
+                                $record->clearViewingSession();
+
                                 // Chỉ hiển thị toast notification cho người thực hiện hành động
                                 // Database notification sẽ được gửi qua Listener cho người tạo hồ sơ
                                 Notification::make()
                                     ->title('Đã từ chối hồ sơ')
                                     ->success()
                                     ->send();
+                                    
+                                // Force close và refresh modal
+                                return redirect()->back();
                             }),
                         \Filament\Tables\Actions\Action::make('resubmit')
                             ->label('Nộp lại')
@@ -347,7 +363,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 }
                                 
                                 return $user->hasPermissionTo('resubmit_profile') && 
-                                       $record->status === 2 && 
+                                       $record->status == 2 && 
                                        ($record->created_by == $user->id || $user->hasRole(['admin', 'super_admin']));
                             })
                             ->action(function (?Profile $record) {
@@ -359,6 +375,9 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                         ->send();
                                     return;
                                 }
+                                
+                                // Clear viewing session trước khi resubmit
+                                $record->clearViewingSession();
                                 
                                 $record->update([
                                     'status' => 0, // Chờ duyệt
@@ -392,7 +411,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     return false;
                                 }
                                 
-                                return $user->hasPermissionTo('cancel_profile') && $record->status === 2;
+                                return $user->hasPermissionTo('cancel_profile') && $record->status == 2;
                             })
                             ->action(function (?Profile $record) {
                                 if (!$record) {
@@ -412,6 +431,9 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     'approved_by' => $user->id,
                                 ]);
 
+                                // Clear viewing session sau khi cancel
+                                $record->clearViewingSession();
+
                                 // Chỉ hiển thị toast notification cho người thực hiện hành động
                                 // Database notification sẽ được gửi qua Listener cho người tạo hồ sơ
                                 Notification::make()
@@ -419,6 +441,9 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->body('Hồ sơ #' . $record->code . ' đã được hủy thành công.')
                                     ->success()
                                     ->send();
+                                    
+                                // Force close và refresh modal
+                                return redirect()->back();
                             }),
                     ])
                     ->visible(function (?Profile $record) {

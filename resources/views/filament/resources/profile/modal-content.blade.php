@@ -154,6 +154,19 @@ function showNotification(fieldName, success = true) {
         }, 300);
     }, 3000);
 }
+
+// Clear session khi modal đóng (chỉ cho hồ sơ chờ duyệt)
+@if($record->status === 0)
+window.addEventListener('beforeunload', function() {
+    fetch('/admin/profiles/{{ $record->id }}/clear-session', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json'
+        }
+    });
+});
+@endif
 </script>
 
 
