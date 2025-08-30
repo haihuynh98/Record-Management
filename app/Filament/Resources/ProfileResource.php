@@ -162,7 +162,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     })
                     ->modalContent(function (?Profile $record) {
                         if (!$record) {
-                            return '<div class="p-4 text-center text-gray-500">Không thể tải thông tin hồ sơ</div>';
+                            return new \Illuminate\Support\HtmlString('<div class="p-4 text-center text-gray-500">Không thể tải thông tin hồ sơ</div>');
                         }
                         // Chỉ check session cho hồ sơ chưa duyệt
                         if ($record->status !== 1) {
