@@ -209,9 +209,23 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             ->modalCancelActionLabel('Không, hủy bỏ')
                             ->visible(function (Profile $record) {
                                 $user = auth()->user();
-                                return $record->canBeViewed() && 
-                                       $user?->hasPermissionTo('approve_profile') && 
-                                       $record->status == 0;
+                                $canBeViewed = $record->canBeViewed();
+                                $hasPermission = $user?->hasPermissionTo('approve_profile');
+                                $correctStatus = $record->status == 0;
+                                
+                                // Debug log cho production
+                                \Log::info('Approve button visibility check', [
+                                    'profile_code' => $record->code,
+                                    'user_id' => $user?->id,
+                                    'canBeViewed' => $canBeViewed,
+                                    'hasPermission' => $hasPermission,
+                                    'correctStatus' => $correctStatus,
+                                    'status' => $record->status,
+                                    'viewing_user_id' => $record->viewing_user_id,
+                                    'is_being_viewed' => $record->isBeingViewed(),
+                                ]);
+                                
+                                return $canBeViewed && $hasPermission && $correctStatus;
                             })
                             ->action(function (Profile $record) {
                                 $user = auth()->user();
@@ -248,9 +262,23 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             ])
                             ->visible(function (Profile $record) {
                                 $user = auth()->user();
-                                return $record->canBeViewed() && 
-                                       $user?->hasPermissionTo('reject_profile') && 
-                                       $record->status == 0;
+                                $canBeViewed = $record->canBeViewed();
+                                $hasPermission = $user?->hasPermissionTo('reject_profile');
+                                $correctStatus = $record->status == 0;
+                                
+                                // Debug log cho production
+                                \Log::info('Reject button visibility check', [
+                                    'profile_code' => $record->code,
+                                    'user_id' => $user?->id,
+                                    'canBeViewed' => $canBeViewed,
+                                    'hasPermission' => $hasPermission,
+                                    'correctStatus' => $correctStatus,
+                                    'status' => $record->status,
+                                    'viewing_user_id' => $record->viewing_user_id,
+                                    'is_being_viewed' => $record->isBeingViewed(),
+                                ]);
+                                
+                                return $canBeViewed && $hasPermission && $correctStatus;
                             })
                             ->action(function (Profile $record, array $data) {
                                 $user = auth()->user();
