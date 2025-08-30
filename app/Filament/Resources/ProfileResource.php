@@ -260,7 +260,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->success()
                                     ->send();
                                     
-                                // Không cần trigger event ở đây vì sẽ dùng JavaScript polling
+                                // Redirect về trang profile sau khi duyệt
+                                return redirect()->to('/admin/profiles');
                             }),
                         \Filament\Tables\Actions\Action::make('reject')
                             ->label('Từ chối')
@@ -426,7 +427,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->success()
                                     ->send();
                                     
-                                // Không cần trigger event ở đây vì sẽ dùng JavaScript polling
+                                // Redirect về trang profile sau khi hủy
+                                return redirect()->to('/admin/profiles');
                             }),
                     ])
                     ->visible(function (?Profile $record) {
