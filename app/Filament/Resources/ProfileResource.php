@@ -226,13 +226,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->title('Đã duyệt hồ sơ')
                                     ->success()
                                     ->send();
-                            })
-                            ->extraAttributes([
-                                'x-data' => '{ processing: false }',
-                                'x-on:click' => 'processing = true',
-                                'x-bind:disabled' => 'processing',
-                                'x-html' => 'processing ? `Đang duyệt...` : `Duyệt`',
-                            ]),
+                            }),
                         \Filament\Tables\Actions\Action::make('reject')
                             ->label('Từ chối')
                             ->icon('heroicon-m-x-mark')
@@ -274,13 +268,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->title('Đã từ chối hồ sơ')
                                     ->success()
                                     ->send();
-                            })
-                            ->extraAttributes([
-                                'x-data' => '{ processing: false }',
-                                'x-on:click' => 'processing = true',
-                                'x-bind:disabled' => 'processing',
-                                'x-html' => 'processing ? `Đang từ chối...` : `Từ chối`',
-                            ]),
+                            }),
                         \Filament\Tables\Actions\Action::make('resubmit')
                             ->label('Nộp lại')
                             ->icon('heroicon-m-arrow-path')
@@ -311,13 +299,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->body('Hồ sơ #' . $record->code . ' đã được nộp lại.')
                                     ->success()
                                     ->send();
-                            })
-                            ->extraAttributes([
-                                'x-data' => '{ processing: false }',
-                                'x-on:click' => 'processing = true',
-                                'x-bind:disabled' => 'processing',
-                                'x-html' => 'processing ? `Đang nộp lại...` : `Nộp lại`',
-                            ]),
+                            }),
                         \Filament\Tables\Actions\Action::make('cancel')
                             ->label('Hủy')
                             ->icon('heroicon-m-x-circle')
@@ -351,13 +333,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->body('Hồ sơ #' . $record->code . ' đã được hủy thành công.')
                                     ->success()
                                     ->send();
-                            })
-                            ->extraAttributes([
-                                'x-data' => '{ processing: false }',
-                                'x-on:click' => 'processing = true',
-                                'x-bind:disabled' => 'processing',
-                                'x-html' => 'processing ? `Đang hủy...` : `Hủy`',
-                            ]),
+                            }),
                     ])
                     ->visible(function (Profile $record) {
                         $user = auth()->user();
