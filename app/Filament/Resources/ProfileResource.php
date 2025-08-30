@@ -367,12 +367,12 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         
                         // Người tạo chỉ xem hồ sơ của mình
                         if ($user->hasRole('creator')) {
-                            return $record->created_by === $user->id && $record->status !== 3;
+                            return $record->created_by == $user->id && $record->status != 3;
                         }
                         
                         // Người duyệt có thể xem hồ sơ chờ duyệt
                         if ($user->hasRole('approver')) {
-                            return $record->status === 0;
+                            return $record->status == 0;
                         }
                         
                         return false;
