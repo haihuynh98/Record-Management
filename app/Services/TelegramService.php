@@ -155,6 +155,31 @@ class TelegramService
     }
 
     /**
+     * Gửi thông báo khi có hồ sơ mới được tạo
+     */
+    public function sendNewProfileCreatedNotification($profile)
+    {
+        $characterId = $profile->character_id ?: 'Chưa có';
+        $createdBy = $profile->createdBy ? $profile->createdBy->username : 'Không xác định';
+        
+        $message = "
+🆕 <b>THÔNG BÁO HỒ SƠ MỚI ĐƯỢC TẠO</b> 🆕
+
+📋 <b>Mã hồ sơ:</b> <code>#{$profile->code}</code>
+👤 <b>ID nhân vật:</b> {$characterId}
+👨‍💼 <b>Người tạo:</b> {$createdBy}
+📊 <b>Trạng thái:</b> Chờ xử lý
+
+🔍 <i>Hồ sơ mới đã được tạo và đang chờ xử lý!</i>
+
+        ";
+
+        $result = $this->sendMessage(config('services.telegram.chat_id'), $message);
+        
+        return $result;
+    }
+
+    /**
      * Gửi thông báo nhắc nhở xử lý hồ sơ
      */
     public function sendRemindProcessNotification($profile)

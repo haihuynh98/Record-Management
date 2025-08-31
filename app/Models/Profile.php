@@ -37,6 +37,20 @@ class Profile extends Model
 
     protected static function booted()
     {
+        static::created(function ($profile) {
+            // Gửi thông báo Telegram khi có hồ sơ mới được tạo
+            try {
+                $telegramService = new TelegramService();
+                $telegramService->sendNewProfileCreatedNotification($profile);
+            } catch (\Exception $e) {
+                Log::error('Failed to send new profile created notification', [
+                    'profile_id' => $profile->id,
+                    'profile_code' => $profile->code,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        });
+
         static::updated(function ($profile) {
             // Kiểm tra nếu trạng thái đã thay đổi
             if ($profile->wasChanged('status')) {
@@ -188,10 +202,17 @@ class Profile extends Model
         if (!$user) {
             return ['success' => false, 'message' => 'Bạn cần đăng nhập để thực hiện hành động này.'];
         }
-        
+
+        // Nếu user không có quyền duyệt và không có quyền từ chối thì bỏ qua session, cho phép xem luôn
+        if (
+            !$user->hasPermissionTo('approve_profile') &&
+            !$user->hasPermissionTo('reject_profile')
+        ) {
+            return ['success' => true, 'message' => 'Bạn không cần session để xem hồ sơ.'];
+        }
+
         // Clear tất cả session cũ của user này trước
         $clearedCount = self::clearAllViewingSessionsByUser($user->id);
-        
         // Refresh để có dữ liệu mới nhất
         $this->refresh();
         
