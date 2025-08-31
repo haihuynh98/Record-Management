@@ -180,6 +180,31 @@ class TelegramService
     }
 
     /**
+     * Gửi thông báo khi hồ sơ được nộp lại (từ chối -> chờ xử lý)
+     */
+    public function sendResubmittedProfileNotification($profile)
+    {
+        $characterId = $profile->character_id ?: 'Chưa có';
+        $createdBy = $profile->createdBy ? $profile->createdBy->username : 'Không xác định';
+        
+        $message = "
+🔄 <b>THÔNG BÁO HỒ SƠ NỘP LẠI</b> 🔄
+
+📋 <b>Mã hồ sơ:</b> <code>#{$profile->code}</code>
+👤 <b>ID nhân vật:</b> {$characterId}
+👨‍💼 <b>Người nộp:</b> {$createdBy}
+📊 <b>Trạng thái:</b> Chờ xử lý
+
+🔁 <i>Hồ sơ đã được nộp lại sau khi bị từ chối!</i>
+
+        ";
+
+        $result = $this->sendMessage(config('services.telegram.chat_id'), $message);
+        
+        return $result;
+    }
+
+    /**
      * Gửi thông báo nhắc nhở xử lý hồ sơ
      */
     public function sendRemindProcessNotification($profile)

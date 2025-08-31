@@ -16,7 +16,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Schema;
-
+use App\Jobs\SendResubmittedProfileNotification;
 use Filament\Tables\Actions\EditAction;
 use Filament\Support\RawJs;
 
@@ -374,6 +374,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     'status' => 0, // Chờ duyệt
                                     'rejection_reason' => null, // Xóa lý do từ chối
                                 ]);
+
+                                SendResubmittedProfileNotification::dispatch($record);
 
                                 Notification::make()
                                     ->title('Đã nộp lại hồ sơ thành công')
