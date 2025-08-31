@@ -1,13 +1,13 @@
 <div class="space-y-6">
     <!-- Thông tin cơ bản -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-gray-50 p-4 rounded-lg">
+        <div class="bg-gray-50 p-4 rounded-lg" x-data="{ copied: false }">
             <div class="flex items-center justify-between">
                 <label class="text-sm font-medium text-gray-500">Mã hồ sơ</label>
                 <button 
                     type="button"
                     class="text-gray-400 hover:text-gray-600 transition-colors"
-                    onclick="copyToClipboard('#{{ $record->code }}', 'Mã hồ sơ')"
+                    x-on:click="navigator.clipboard.writeText('#{{ $record->code }}'); copied = true; setTimeout(() => copied = false, 2000)"
                     title="Sao chép mã hồ sơ"
                 >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -15,16 +15,19 @@
                     </svg>
                 </button>
             </div>
-            <p class="text-lg font-semibold text-gray-900">#{{ $record->code }}</p>
+            <div class="flex items-center gap-2">
+                <p class="text-lg font-semibold text-gray-900">#{{ $record->code }}</p>
+                <span x-show="copied" x-transition class="text-green-500 text-sm">Đã copy!</span>
+            </div>
         </div>
         
-        <div class="bg-gray-50 p-4 rounded-lg">
+        <div class="bg-gray-50 p-4 rounded-lg" x-data="{ copied: false }">
             <div class="flex items-center justify-between">
                 <label class="text-sm font-medium text-gray-500">ID nhân vật</label>
                 <button 
                     type="button"
                     class="text-gray-400 hover:text-gray-600 transition-colors"
-                    onclick="copyToClipboard('{{ $record->character_id ?? 'N/A' }}', 'ID nhân vật')"
+                    x-on:click="navigator.clipboard.writeText('{{ $record->character_id ?? 'N/A' }}'); copied = true; setTimeout(() => copied = false, 2000)"
                     title="Sao chép ID nhân vật"
                 >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -32,7 +35,10 @@
                     </svg>
                 </button>
             </div>
-            <p class="text-lg font-semibold text-blue-600">{{ $record->character_id ?? 'N/A' }}</p>
+            <div class="flex items-center gap-2">
+                <p class="text-lg font-semibold text-blue-600">{{ $record->character_id ?? 'N/A' }}</p>
+                <span x-show="copied" x-transition class="text-green-500 text-sm">Đã copy!</span>
+            </div>
         </div>
         
         <div class="bg-gray-50 p-4 rounded-lg">
@@ -91,69 +97,6 @@
 </div>
 
 <script>
-// Copy to clipboard function
-function copyToClipboard(text, fieldName) {
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(() => {
-            showNotification(fieldName, true);
-        }).catch(() => {
-            showNotification(fieldName, false);
-        });
-    } else {
-        const tempInput = document.createElement('input');
-        tempInput.value = text;
-        tempInput.style.position = 'absolute';
-        tempInput.style.left = '-9999px';
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        tempInput.setSelectionRange(0, 99999);
-        
-        try {
-            document.execCommand('copy');
-            showNotification(fieldName, true);
-        } catch (err) {
-            showNotification(fieldName, false);
-        }
-        
-        document.body.removeChild(tempInput);
-    }
-}
-
-// Show notification function
-function showNotification(fieldName, success = true) {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full ${
-        success ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-    }`;
-    
-    notification.innerHTML = `
-        <div class='flex items-center space-x-2'>
-            <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='${
-                    success 
-                        ? 'M5 13l4 4L19 7' 
-                        : 'M6 18L18 6M6 6l12 12'
-                }'></path>
-            </svg>
-            <span>${success ? `Đã sao chép ${fieldName} vào clipboard` : `Không thể sao chép ${fieldName}`}</span>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.classList.remove('translate-x-full');
-    }, 100);
-    
-    setTimeout(() => {
-        notification.classList.add('translate-x-full');
-        setTimeout(() => {
-            if (document.body.contains(notification)) {
-                document.body.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
-}
 
 // Clear session khi modal đóng (chỉ cho hồ sơ chờ duyệt)
 @if($record->status === 0)
