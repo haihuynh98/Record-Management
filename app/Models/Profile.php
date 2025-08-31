@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Events\ProfileStatusChanged;
-use App\Services\TelegramService;
+use App\Jobs\SendNewProfileNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
@@ -38,17 +38,8 @@ class Profile extends Model
     protected static function booted()
     {
         static::created(function ($profile) {
-            // Gửi thông báo Telegram khi có hồ sơ mới được tạo
-            try {
-                $telegramService = new TelegramService();
-                $telegramService->sendNewProfileCreatedNotification($profile);
-            } catch (\Exception $e) {
-                Log::error('Failed to send new profile created notification', [
-                    'profile_id' => $profile->id,
-                    'profile_code' => $profile->code,
-                    'error' => $e->getMessage()
-                ]);
-            }
+            // Dispatch job để gửi thông báo Telegram khi có hồ sơ mới được tạo
+            SendNewProfileNotification::dispatch($profile);
         });
 
         static::updated(function ($profile) {
