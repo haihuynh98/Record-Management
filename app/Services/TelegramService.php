@@ -243,4 +243,47 @@ class TelegramService
         
         return $result;
     }
+
+    /**
+     * Gửi thông báo yêu cầu hỗ trợ
+     */
+    public function sendSupportRequestNotification($profile, $supportMessage, $requestedBy)
+    {
+        $characterId = $profile->character_id ?: 'Chưa có';
+        $createdBy = $profile->createdBy ? $profile->createdBy->username : 'Không xác định';
+        $requestedByUsername = $requestedBy->username ?? 'Không xác định';
+        $statuses = [
+            0 => 'Chờ duyệt',
+            1 => 'Đã duyệt',
+            2 => 'Từ chối',
+            3 => 'Hủy',
+        ];
+        $status = $statuses[$profile->status] ?? 'Không xác định';
+        
+        $message = "
+🆘 <b>YÊU CẦU HỖ TRỢ</b> 🆘
+
+📋 <b>Mã hồ sơ:</b> <code>#{$profile->code}</code>
+👤 <b>ID nhân vật:</b> {$characterId}
+👨‍💼 <b>Người tạo:</b> {$createdBy}
+📊 <b>Trạng thái:</b> {$status}
+⏰ <b>Thời gian tạo:</b> {$profile->created_at->format('d/m/Y H:i:s')}
+
+👤 <b>Người gửi yêu cầu:</b> {$requestedByUsername}
+⏰ <b>Thời gian yêu cầu:</b> " . now()->format('d/m/Y H:i:s') . "
+
+📝 <b>Nội dung yêu cầu hỗ trợ:</b>
+{$supportMessage}
+
+🔧 <i>Vui lòng hỗ trợ người dùng với yêu cầu trên!</i>
+
+        ";
+
+        // Sử dụng chat_id của group hỗ trợ (khác với group thông báo chính)
+        $supportChatId = config('services.telegram.support_chat_id', config('services.telegram.chat_id'));
+        
+        $result = $this->sendMessage($supportChatId, $message);
+        
+        return $result;
+    }
 }

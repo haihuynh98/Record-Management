@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Schema;
 use App\Jobs\SendResubmittedProfileNotification;
+use App\Jobs\SendSupportRequestNotification;
 use Filament\Tables\Actions\EditAction;
 use Filament\Support\RawJs;
 
@@ -154,6 +155,57 @@ class ProfileResource extends Resource implements HasShieldPermissions
             ->poll('10s')
             ->recordUrl(null)
             ->actions([
+                \Filament\Tables\Actions\Action::make('support')
+                    ->label('Hỗ trợ')
+                    ->icon('heroicon-m-phone')
+                    ->color('info')
+                    ->modalHeading('Yêu cầu hỗ trợ')
+                    ->modalDescription(function (?Profile $record) {
+                        return $record ? 'Vui lòng mô tả chi tiết vấn đề bạn cần hỗ trợ với hồ sơ #' . $record->code . ':' : 'Vui lòng mô tả chi tiết vấn đề bạn cần hỗ trợ:';
+                    })
+                    ->form([
+                        Forms\Components\Textarea::make('support_message')
+                            ->label('Nội dung yêu cầu hỗ trợ')
+                            ->required()
+                            ->placeholder('Nhập chi tiết vấn đề bạn cần hỗ trợ...')
+                            ->minLength(10)
+                            ->maxLength(1000)
+                            ->helperText('Mô tả chi tiết vấn đề để chúng tôi có thể hỗ trợ bạn tốt nhất'),
+                    ])
+                    ->visible(function (?Profile $record) {
+                        if (!$record) {
+                            return false;
+                        }
+                        
+                        $user = auth()->user();
+                        if (!$user) {
+                            return false;
+                        }
+                        
+                        // Tất cả user đều có thể yêu cầu hỗ trợ
+                        return true;
+                    })
+                    ->action(function (?Profile $record, array $data) {
+                        if (!$record) {
+                            Notification::make()
+                                ->title('Lỗi')
+                                ->body('Không thể tìm thấy hồ sơ')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+                        
+                        $user = auth()->user();
+                        
+                        // Dispatch job để gửi thông báo hỗ trợ
+                        SendSupportRequestNotification::dispatch($record, $data['support_message'], $user);
+
+                        Notification::make()
+                            ->title('Đã gửi yêu cầu hỗ trợ')
+                            ->body('Yêu cầu hỗ trợ của bạn đã được gửi thành công. Chúng tôi sẽ phản hồi sớm nhất có thể.')
+                            ->success()
+                            ->send();
+                    }),
                 \Filament\Tables\Actions\Action::make('view')
                     ->label('Xem chi tiết')
                     ->icon('heroicon-o-eye')
@@ -438,6 +490,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 // Redirect về trang profile sau khi hủy
                                 return redirect()->to('/admin/profiles');
                             }),
+
                     ])
                     ->visible(function (?Profile $record) {
                         if (!$record) {
