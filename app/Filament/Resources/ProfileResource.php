@@ -158,7 +158,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                 \Filament\Tables\Actions\Action::make('support')
                     ->label('Hỗ trợ')
                     ->icon('heroicon-m-phone')
-                    ->color('info')
+                    ->color('warning')
                     ->modalHeading('Yêu cầu hỗ trợ')
                     ->modalDescription(function (?Profile $record) {
                         return $record ? 'Vui lòng mô tả chi tiết vấn đề bạn cần hỗ trợ với hồ sơ #' . $record->code . ':' : 'Vui lòng mô tả chi tiết vấn đề bạn cần hỗ trợ:';
