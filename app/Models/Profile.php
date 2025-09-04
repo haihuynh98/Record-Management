@@ -69,6 +69,10 @@ class Profile extends Model
         return $this->belongsTo(User::class, 'viewing_user_id');
     }
 
+    public function supportLogs(){
+        return $this->hasMany(SupportLog::class);
+    }
+
     public function scopeUnApprove($q)
     {
         return $q->whereNull('approved_at');

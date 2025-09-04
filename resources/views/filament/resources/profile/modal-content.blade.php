@@ -44,7 +44,7 @@
         <div class="bg-gray-50 p-4 rounded-lg">
             <label class="text-sm font-medium text-gray-500">Trạng thái</label>
             <div class="mt-1">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $statusColors[$record->status] }}-100 text-{{ $statusColors[$record->status] }}-800">
+                <span class="inline-flex items-center rounded-full text-xs font-medium bg-{{ $statusColors[$record->status] }}-100 text-{{ $statusColors[$record->status] }}-800">
                     {{ $statuses[$record->status] }}
                 </span>
 
@@ -91,6 +91,34 @@
         <label class="text-sm font-medium text-red-700">Lý do từ chối</label>
         <div class="mt-2">
             <p class="text-sm text-red-800">{{ $record->rejection_reason }}</p>
+        </div>
+    </div>
+    @endif
+
+    <!-- Nội dung hỗ trợ (nếu có) -->
+    @if($record->status === 4 && $supportLogs->count() > 0)
+    <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <label class="text-sm font-medium text-blue-700 mb-3 block">Lịch sử yêu cầu hỗ trợ</label>
+        
+        <div class="space-y-3">
+            @foreach($supportLogs as $index => $supportLog)
+            <div class="bg-white p-3 rounded border border-blue-100">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-blue-600">
+                        Yêu cầu #{{ $supportLogs->count() - $index }}
+                    </span>
+                    <span class="text-xs text-gray-500">
+                        {{ \Carbon\Carbon::parse($supportLog->created_at)->format('d/m/Y H:i:s') }}
+                    </span>
+                </div>
+                <div class="mb-2">
+                    <p class="text-sm text-gray-800">{{ $supportLog->support_message }}</p>
+                </div>
+                <div class="text-xs text-gray-500">
+                    <span>Người yêu cầu: {{ $supportLog->user->username ?? 'N/A' }}</span>
+                </div>
+            </div>
+            @endforeach
         </div>
     </div>
     @endif

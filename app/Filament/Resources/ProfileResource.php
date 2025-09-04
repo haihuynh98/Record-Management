@@ -109,6 +109,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             1 => 'Đã duyệt',
                             2 => 'Từ chối',
                             3 => 'Hủy',
+                            4 => 'Hỗ trợ',
                         ];
                         return $statuses[$state] ?? 'Chờ duyệt';
                     }),
@@ -182,8 +183,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             return false;
                         }
                         
-                        // Tất cả user đều có thể yêu cầu hỗ trợ
-                        return true;
+                        // Chỉ hiển thị button hỗ trợ khi status là "Đã duyệt" (1)
+                        return $record->status == 1;
                     })
                     ->action(function (?Profile $record, array $data) {
                         if (!$record) {
@@ -197,12 +198,24 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         
                         $user = auth()->user();
                         
+                        // Cập nhật status của profile thành hỗ trợ (4)
+                        $record->update([
+                            'status' => 4, // Hỗ trợ
+                        ]);
+                        
+                        // Lưu support message vào bảng support_logs
+                        \App\Models\SupportLog::create([
+                            'profile_id' => $record->id,
+                            'user_id' => $user->id,
+                            'support_message' => $data['support_message'],
+                        ]);
+                        
                         // Dispatch job để gửi thông báo hỗ trợ
                         SendSupportRequestNotification::dispatch($record, $data['support_message'], $user);
 
                         Notification::make()
                             ->title('Đã gửi yêu cầu hỗ trợ')
-                            ->body('Yêu cầu hỗ trợ của bạn đã được gửi thành công. Chúng tôi sẽ phản hồi sớm nhất có thể.')
+                            ->body('Yêu cầu hỗ trợ của bạn đã được gửi thành công. Trạng thái hồ sơ đã được cập nhật thành "Hỗ trợ".')
                             ->success()
                             ->send();
                     }),
@@ -242,6 +255,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             1 => 'Đã duyệt',
                             2 => 'Từ chối',
                             3 => 'Hủy',
+                            4 => 'Hỗ trợ',
                         ];
                         
                         $statusColors = [
@@ -249,12 +263,20 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             1 => 'success',
                             2 => 'danger',
                             3 => 'gray',
+                            4 => 'info',
                         ];
+                        
+                        // Lấy tất cả support logs nếu status là hỗ trợ (4)
+                        $supportLogs = collect();
+                        if ($record->status == 4) {
+                            $supportLogs = $record->supportLogs()->with('user')->latest()->get();
+                        }
                         
                         return view('filament.resources.profile.modal-content', [
                             'record' => $record,
                             'statuses' => $statuses,
                             'statusColors' => $statusColors,
+                            'supportLogs' => $supportLogs,
                         ]);
                     })
                     ->modalSubmitAction(false)
@@ -491,6 +513,59 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 return redirect()->to('/admin/profiles');
                             }),
 
+                        \Filament\Tables\Actions\Action::make('resolve_support')
+                            ->label('Xong')
+                            ->icon('heroicon-m-check-circle')
+                            ->color('success')
+                            ->requiresConfirmation()
+                            ->modalHeading('Xác nhận hoàn thành hỗ trợ')
+                            ->modalDescription(function (?Profile $record) {
+                                return $record ? 'Bạn có chắc chắn muốn đánh dấu hoàn thành hỗ trợ cho hồ sơ #' . $record->code . '?' : 'Bạn có chắc chắn muốn đánh dấu hoàn thành hỗ trợ?';
+                            })
+                            ->modalSubmitActionLabel('Có, hoàn thành')
+                            ->modalCancelActionLabel('Không, hủy bỏ')
+                            ->visible(function (?Profile $record) {
+                                if (!$record) {
+                                    return false;
+                                }
+                                
+                                $user = auth()->user();
+                                if (!$user) {
+                                    return false;
+                                }
+                                
+                                // Chỉ hiển thị khi status là hỗ trợ (4) và user có permission approve_profile
+                                return $record->status == 4 && $user->hasPermissionTo('approve_profile');
+                            })
+                            ->action(function (?Profile $record) {
+                                if (!$record) {
+                                    Notification::make()
+                                        ->title('Lỗi')
+                                        ->body('Không thể tìm thấy hồ sơ')
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
+                                
+                                $user = auth()->user();
+                                
+                                // Cập nhật status về "Đã duyệt" (1)
+                                $record->update([
+                                    'status' => 1, // Đã duyệt
+                                    'approved_at' => now(),
+                                    'approved_by' => $user->id,
+                                ]);
+
+                                Notification::make()
+                                    ->title('Đã hoàn thành hỗ trợ')
+                                    ->body('Hồ sơ #' . $record->code . ' đã được đánh dấu hoàn thành hỗ trợ và chuyển về trạng thái "Đã duyệt".')
+                                    ->success()
+                                    ->send();
+                                    
+                                // Redirect về trang profile sau khi hoàn thành
+                                return redirect()->to('/admin/profiles');
+                            }),
+
                     ])
                     ->visible(function (?Profile $record) {
                         if (!$record) {
@@ -570,6 +645,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             1 => 'Đã duyệt',
                             2 => 'Từ chối',
                             3 => 'Hủy',
+                            4 => 'Hỗ trợ',
                         ];
                         return $statuses[$state] ?? 'Chờ duyệt';
                     })
