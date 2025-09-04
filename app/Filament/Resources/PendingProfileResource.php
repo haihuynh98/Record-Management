@@ -2,10 +2,9 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\SupportProfileResource\Pages;
-use App\Filament\Resources\SupportProfileResource\RelationManagers;
+use App\Filament\Resources\PendingProfileResource\Pages;
+use App\Filament\Resources\PendingProfileResource\RelationManagers;
 use App\Models\Profile;
-use App\Models\SupportLog;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,36 +14,36 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Notifications\Notification;
 
-class SupportProfileResource extends Resource
+class PendingProfileResource extends Resource
 {
     protected static ?string $model = Profile::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-phone';
+    protected static ?string $navigationIcon = 'heroicon-o-clock';
 
-    protected static ?string $navigationLabel = 'Hồ sơ hỗ trợ';
+    protected static ?string $navigationLabel = 'Hồ sơ chờ';
 
-    protected static ?string $modelLabel = 'Hồ sơ hỗ trợ';
+    protected static ?string $modelLabel = 'Hồ sơ chờ';
 
-    protected static ?string $pluralModelLabel = 'Hồ sơ hỗ trợ';
+    protected static ?string $pluralModelLabel = 'Hồ sơ chờ';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $navigationGroup = 'Hồ sơ';
 
     public static function canCreate(): bool
     {
-        return false; // Không cho phép tạo mới hồ sơ hỗ trợ
+        return false; // Không cho phép tạo mới hồ sơ chờ duyệt
     }
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasPermissionTo('view_any_support::profile') ?? false;
+        return auth()->user()?->hasPermissionTo('view_any_pending::profile') ?? false;
     }
 
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('status', 4); // Chỉ hiển thị hồ sơ có status hỗ trợ
+            ->where('status', 5); // Chỉ hiển thị hồ sơ có status "Chờ" (trạng thái mới)
     }
 
     public static function getNavigationBadge(): ?string
@@ -52,12 +51,12 @@ class SupportProfileResource extends Resource
         if (!static::canViewAny()) {
             return null;
         }
-        return static::getModel()::where('status', 4)->count();
+        return static::getModel()::where('status', 5)->count();
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'info';
+        return 'warning';
     }
 
     public static function form(Form $form): Form
@@ -119,6 +118,7 @@ class SupportProfileResource extends Resource
                             2 => 'Từ chối',
                             3 => 'Hủy',
                             4 => 'Hỗ trợ',
+                            5 => 'Chờ',
                         ];
                         return $statuses[$state] ?? 'Chờ duyệt';
                     })
@@ -129,6 +129,7 @@ class SupportProfileResource extends Resource
                         '2' => 'danger',
                         '3' => 'gray',
                         '4' => 'info',
+                        '5' => 'secondary',
                         default => 'gray',
                     }),
                     
@@ -136,12 +137,6 @@ class SupportProfileResource extends Resource
                     ->label('Ngày tạo')
                     ->dateTime('d/m/Y H:i:s')
                     ->sortable(),
-                    
-                Tables\Columns\TextColumn::make('supportLogs_count')
-                    ->label('Số lần hỗ trợ')
-                    ->counts('supportLogs')
-                    ->badge()
-                    ->color('info'),
             ])
             ->filters([
                 //
@@ -161,12 +156,30 @@ class SupportProfileResource extends Resource
                         // Refresh record để có dữ liệu mới nhất
                         $record->refresh();
                         
+                        // Clear cache để tránh stale data trong production
+                        if (app()->environment('production')) {
+                            \Cache::forget("profile_{$record->id}");
+                        }
+                        
+                        // Chỉ check session cho hồ sơ chờ duyệt (status = 0)
+                        if ($record->status == 0) {
+                            $result = $record->handleViewSession();
+                            
+                            if (!$result['success']) {
+                                return view('filament.resources.profile.modal-viewing', [
+                                    'record' => $record,
+                                    'errorMessage' => $result['message']
+                                ]);
+                            }
+                        }
+                        
                         $statuses = [
                             0 => 'Chờ duyệt',
                             1 => 'Đã duyệt',
                             2 => 'Từ chối',
                             3 => 'Hủy',
                             4 => 'Hỗ trợ',
+                            5 => 'Chờ',
                         ];
                         
                         $statusColors = [
@@ -175,29 +188,28 @@ class SupportProfileResource extends Resource
                             2 => 'danger',
                             3 => 'gray',
                             4 => 'info',
+                            5 => 'secondary',
                         ];
-                        
-                        // Lấy tất cả support logs
-                        $supportLogs = $record->supportLogs()->with('user')->latest()->get();
                         
                         return view('filament.resources.profile.modal-content', [
                             'record' => $record,
                             'statuses' => $statuses,
                             'statusColors' => $statusColors,
-                            'supportLogs' => $supportLogs,
+                            'supportLogs' => collect(), // Không có support logs cho hồ sơ chờ duyệt
                         ]);
                     })
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Đóng')
                     ->modalActions([
-                        Tables\Actions\Action::make('resolve_support')
-                            ->label('Xong')
+                        
+                        Tables\Actions\Action::make('complete')
+                            ->label('Hoàn thành')
                             ->icon('heroicon-m-check-circle')
                             ->color('success')
                             ->requiresConfirmation()
-                            ->modalHeading('Xác nhận hoàn thành hỗ trợ')
+                            ->modalHeading('Xác nhận hoàn thành hồ sơ')
                             ->modalDescription(function (?Profile $record) {
-                                return $record ? 'Bạn có chắc chắn muốn đánh dấu hoàn thành hỗ trợ cho hồ sơ #' . $record->code . '?' : 'Bạn có chắc chắn muốn đánh dấu hoàn thành hỗ trợ?';
+                                return $record ? 'Bạn có chắc chắn muốn hoàn thành hồ sơ #' . $record->code . '?' : 'Bạn có chắc chắn muốn hoàn thành hồ sơ?';
                             })
                             ->modalSubmitActionLabel('Có, hoàn thành')
                             ->modalCancelActionLabel('Không, hủy bỏ')
@@ -211,8 +223,8 @@ class SupportProfileResource extends Resource
                                     return false;
                                 }
                                 
-                                // Chỉ hiển thị khi status là hỗ trợ (4) và user có permission approve_profile
-                                return $record->status == 4 && $user->hasPermissionTo('approve_profile');
+                                // Chỉ hiển thị khi status là "Chờ" (5) và user có permission approve_profile
+                                return $record->status == 5 && $user->hasPermissionTo('approve_profile');
                             })
                             ->action(function (?Profile $record) {
                                 if (!$record) {
@@ -226,21 +238,24 @@ class SupportProfileResource extends Resource
                                 
                                 $user = auth()->user();
                                 
-                                // Cập nhật status về "Đã duyệt" (1)
+                                // Cập nhật status từ "Chờ" (5) sang "Đã duyệt" (1)
                                 $record->update([
                                     'status' => 1, // Đã duyệt
                                     'approved_at' => now(),
                                     'approved_by' => $user->id,
                                 ]);
 
+                                // Clear viewing session sau khi hoàn thành
+                                $record->clearViewingSession();
+
                                 Notification::make()
-                                    ->title('Đã hoàn thành hỗ trợ')
-                                    ->body('Hồ sơ #' . $record->code . ' đã được đánh dấu hoàn thành hỗ trợ và chuyển về trạng thái "Đã duyệt".')
+                                    ->title('Đã hoàn thành hồ sơ')
+                                    ->body('Hồ sơ #' . $record->code . ' đã được hoàn thành và chuyển sang trạng thái "Đã duyệt".')
                                     ->success()
                                     ->send();
                                     
-                                // Redirect về trang support profiles sau khi hoàn thành
-                                return redirect()->to('/admin/support-profiles');
+                                // Redirect về trang pending profiles sau khi hoàn thành
+                                return redirect()->to('/admin/pending-profiles');
                             }),
                     ])
                     ->visible(function (?Profile $record) {
@@ -257,14 +272,9 @@ class SupportProfileResource extends Resource
                             return true;
                         }
                         
-                        // Người tạo chỉ xem hồ sơ của mình
-                        if ($user->hasRole('creator')) {
-                            return $record->created_by == $user->id && $record->status != 3;
-                        }
-                        
-                        // Người duyệt có thể xem hồ sơ chờ duyệt
+                        // Người duyệt có thể xem hồ sơ chờ
                         if ($user->hasRole('approver')) {
-                            return $record->status == 0;
+                            return $record->status == 5;
                         }
                         
                         return false;
@@ -287,7 +297,7 @@ class SupportProfileResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListSupportProfiles::route('/'),
+            'index' => Pages\ListPendingProfiles::route('/'),
         ];
     }
 }

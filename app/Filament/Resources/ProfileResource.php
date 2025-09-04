@@ -566,6 +566,62 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 return redirect()->to('/admin/profiles');
                             }),
 
+                        \Filament\Tables\Actions\Action::make('set_pending')
+                            ->label('Chờ')
+                            ->icon('heroicon-m-clock')
+                            ->color('warning')
+                            ->requiresConfirmation()
+                            ->modalHeading('Xác nhận chuyển trạng thái')
+                            ->modalDescription(function (?Profile $record) {
+                                return $record ? 'Bạn có chắc chắn muốn chuyển hồ sơ #' . $record->code . ' sang trạng thái "Chờ"?' : 'Bạn có chắc chắn muốn chuyển hồ sơ sang trạng thái "Chờ"?';
+                            })
+                            ->modalSubmitActionLabel('Có, chuyển trạng thái')
+                            ->modalCancelActionLabel('Không, hủy bỏ')
+                            ->visible(function (?Profile $record) {
+                                if (!$record) {
+                                    return false;
+                                }
+                                
+                                $user = auth()->user();
+                                if (!$user) {
+                                    return false;
+                                }
+                                
+                                // Chỉ hiển thị khi status là "Chờ duyệt" (0) và user có permission approve_profile
+                                return $record->status == 0 && $user->hasPermissionTo('approve_profile');
+                            })
+                            ->action(function (?Profile $record) {
+                                if (!$record) {
+                                    Notification::make()
+                                        ->title('Lỗi')
+                                        ->body('Không thể tìm thấy hồ sơ')
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
+                                
+                                $user = auth()->user();
+                                
+                                // Cập nhật status từ "Chờ duyệt" (0) sang "Chờ" (5)
+                                $record->update([
+                                    'status' => 5, // Chờ
+                                    'approved_at' => now(),
+                                    'approved_by' => $user->id,
+                                ]);
+
+                                // Clear viewing session sau khi chuyển trạng thái
+                                $record->clearViewingSession();
+
+                                Notification::make()
+                                    ->title('Đã chuyển trạng thái')
+                                    ->body('Hồ sơ #' . $record->code . ' đã được chuyển sang trạng thái "Chờ".')
+                                    ->success()
+                                    ->send();
+                                    
+                                // Redirect về trang profile sau khi chuyển trạng thái
+                                return redirect()->to('/admin/profiles');
+                            }),
+
                     ])
                     ->visible(function (?Profile $record) {
                         if (!$record) {
