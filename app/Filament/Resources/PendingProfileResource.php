@@ -26,7 +26,7 @@ class PendingProfileResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Hồ sơ chờ';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $navigationGroup = 'Hồ sơ';
 
@@ -111,7 +111,7 @@ class PendingProfileResource extends Resource
                     
                 Tables\Columns\TextColumn::make('status')
                     ->label('Trạng thái')
-                    ->formatStateUsing(function ($state) {
+                    ->formatStateUsing(function ($state, $record) {
                         $statuses = [
                             0 => 'Chờ duyệt',
                             1 => 'Đã duyệt',
@@ -120,17 +120,36 @@ class PendingProfileResource extends Resource
                             4 => 'Hỗ trợ',
                             5 => 'Chờ',
                         ];
+                        
+                        // Kiểm tra trạng thái "Đủ điều kiện" cho status = 5 (Chờ)
+                        if ($state == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
+                            $hoursSinceUpdate = $record->approved_at->diffInHours(now());
+                            if ($hoursSinceUpdate >= 6) {
+                                return 'Đủ điều kiện';
+                            }
+                        }
+                        
                         return $statuses[$state] ?? 'Chờ duyệt';
                     })
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        '0' => 'warning',
-                        '1' => 'success',
-                        '2' => 'danger',
-                        '3' => 'gray',
-                        '4' => 'info',
-                        '5' => 'secondary',
-                        default => 'gray',
+                    ->color(function ($state, $record) {
+                        // Kiểm tra trạng thái "Đủ điều kiện" cho status = 5 (Chờ)
+                        if ($state == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
+                            $hoursSinceUpdate = $record->approved_at->diffInHours(now());
+                            if ($hoursSinceUpdate >= 6) {
+                                return 'success'; // Màu xanh lá cho "Đủ điều kiện"
+                            }
+                        }
+                        
+                        return match ($state) {
+                            '0' => 'warning',
+                            '1' => 'success',
+                            '2' => 'danger',
+                            '3' => 'gray',
+                            '4' => 'info',
+                            '5' => 'secondary',
+                            default => 'gray',
+                        };
                     }),
                     
                 Tables\Columns\TextColumn::make('created_at')
@@ -182,6 +201,14 @@ class PendingProfileResource extends Resource
                             5 => 'Chờ',
                         ];
                         
+                        // Kiểm tra trạng thái "Đủ điều kiện" cho status = 5 (Chờ)
+                        if ($record->status == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
+                            $hoursSinceUpdate = $record->approved_at->diffInHours(now());
+                            if ($hoursSinceUpdate >= 6) {
+                                $statuses[5] = 'Đủ điều kiện';
+                            }
+                        }
+                        
                         $statusColors = [
                             0 => 'warning',
                             1 => 'success',
@@ -190,6 +217,14 @@ class PendingProfileResource extends Resource
                             4 => 'info',
                             5 => 'secondary',
                         ];
+                        
+                        // Cập nhật màu cho trạng thái "Đủ điều kiện"
+                        if ($record->status == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
+                            $hoursSinceUpdate = $record->approved_at->diffInHours(now());
+                            if ($hoursSinceUpdate >= 6) {
+                                $statusColors[5] = 'success';
+                            }
+                        }
                         
                         return view('filament.resources.profile.modal-content', [
                             'record' => $record,
@@ -223,8 +258,16 @@ class PendingProfileResource extends Resource
                                     return false;
                                 }
                                 
-                                // Chỉ hiển thị khi status là "Chờ" (5) và user có permission approve_profile
-                                return $record->status == 5 && $user->hasPermissionTo('approve_profile');
+                                // Chỉ hiển thị khi status là "Chờ" (5), user có permission approve_profile và đã đủ 6 tiếng
+                                if ($record->status == 5 && $user->hasPermissionTo('approve_profile')) {
+                                    // Kiểm tra nếu đã đủ 6 tiếng từ khi approved_at
+                                    if ($record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
+                                        $hoursSinceUpdate = $record->approved_at->diffInHours(now());
+                                        return $hoursSinceUpdate >= 6;
+                                    }
+                                }
+                                
+                                return false;
                             })
                             ->action(function (?Profile $record) {
                                 if (!$record) {

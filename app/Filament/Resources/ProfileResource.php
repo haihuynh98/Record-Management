@@ -256,7 +256,16 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             2 => 'Từ chối',
                             3 => 'Hủy',
                             4 => 'Hỗ trợ',
+                            5 => 'Chờ',
                         ];
+                        
+                        // Kiểm tra trạng thái "Đủ điều kiện" cho status = 5 (Chờ)
+                        if ($record->status == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
+                            $hoursSinceUpdate = $record->approved_at->diffInHours(now());
+                            if ($hoursSinceUpdate >= 6) {
+                                $statuses[5] = 'Đủ điều kiện';
+                            }
+                        }
                         
                         $statusColors = [
                             0 => 'warning',
@@ -264,7 +273,16 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             2 => 'danger',
                             3 => 'gray',
                             4 => 'info',
+                            5 => 'secondary',
                         ];
+                        
+                        // Cập nhật màu cho trạng thái "Đủ điều kiện"
+                        if ($record->status == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
+                            $hoursSinceUpdate = $record->approved_at->diffInHours(now());
+                            if ($hoursSinceUpdate >= 6) {
+                                $statusColors[5] = 'success';
+                            }
+                        }
                         
                         // Lấy tất cả support logs nếu status là hỗ trợ (4)
                         $supportLogs = collect();
@@ -695,23 +713,43 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     }),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Trạng thái')
-                    ->formatStateUsing(function ($state) {
+                    ->formatStateUsing(function ($state, $record) {
                         $statuses = [
                             0 => 'Chờ duyệt',
                             1 => 'Đã duyệt',
                             2 => 'Từ chối',
                             3 => 'Hủy',
                             4 => 'Hỗ trợ',
+                            5 => 'Chờ',
                         ];
+                        
+                        // Kiểm tra trạng thái "Đủ điều kiện" cho status = 5 (Chờ)
+                        if ($state == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
+                            $hoursSinceUpdate = $record->approved_at->diffInHours(now());
+                            if ($hoursSinceUpdate >= 6) {
+                                return 'Đủ điều kiện';
+                            }
+                        }
+                        
                         return $statuses[$state] ?? 'Chờ duyệt';
                     })
                     ->badge()
-                    ->color(function ($state) {
+                    ->color(function ($state, $record) {
+                        // Kiểm tra trạng thái "Đủ điều kiện" cho status = 5 (Chờ)
+                        if ($state == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
+                            $hoursSinceUpdate = $record->approved_at->diffInHours(now());
+                            if ($hoursSinceUpdate >= 6) {
+                                return 'success'; // Màu xanh lá cho "Đủ điều kiện"
+                            }
+                        }
+                        
                         return match ($state) {
                             0 => 'warning',
                             1 => 'success',
                             2 => 'danger',
                             3 => 'gray',
+                            4 => 'info',
+                            5 => 'secondary',
                             default => 'warning',
                         };
                     }),

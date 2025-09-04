@@ -31,6 +31,7 @@ class Profile extends Model
     protected $casts = [
         'status' => 'integer',
         'status_old' => 'integer',
+        'approved_at' => 'datetime',
         'viewing_started_at' => 'datetime',
         'last_notification_sent_at' => 'datetime',
     ];
