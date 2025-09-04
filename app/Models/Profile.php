@@ -16,6 +16,7 @@ class Profile extends Model
     protected $fillable = [
         'code',
         'character_id',
+        'password',
         'rejection_reason',
         'created_by',
         'approved_by',
@@ -229,6 +230,22 @@ class Profile extends Model
         } else {
             return ['success' => false, 'message' => 'Không thể thiết lập session.'];
         }
+    }
+
+    /**
+     * Generate password tự động
+     */
+    public function generatePassword(): string
+    {
+        // Tạo password 8 ký tự bao gồm chữ hoa, chữ thường và số
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        $password = '';
+        
+        for ($i = 0; $i < 8; $i++) {
+            $password .= $characters[rand(0, strlen($characters) - 1)];
+        }
+        
+        return $password;
     }
 
 

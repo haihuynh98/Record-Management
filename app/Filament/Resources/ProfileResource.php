@@ -325,7 +325,6 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 // Chỉ check permissions và status, không gọi handleViewSession ở đây
                                 return $user->hasPermissionTo('approve_profile') && $record->status == 0;
                             })
-
                             ->action(function (?Profile $record) {
                                 if (!$record) {
                                     Notification::make()
@@ -338,17 +337,25 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 
                                 $user = auth()->user();
                                 
+                                // Lấy password từ session hoặc generate mới
+                                $password = session('profile_password_' . $record->id) ?? $record->generatePassword();
+                                
                                 $record->update([
                                     'status' => 1, // Đã duyệt
+                                    'password' => $password,
                                     'approved_at' => now(),
                                     'approved_by' => $user->id,
                                 ]);
 
                                 // Clear viewing session sau khi approve
                                 $record->clearViewingSession();
+                                
+                                // Clear password session
+                                session()->forget('profile_password_' . $record->id);
 
                                 Notification::make()
                                     ->title('Đã duyệt hồ sơ')
+                                    ->body('Hồ sơ #' . $record->code . ' đã được duyệt với mật khẩu: ' . $password)
                                     ->success()
                                     ->send();
                                     

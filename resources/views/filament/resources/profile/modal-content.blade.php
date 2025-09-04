@@ -62,8 +62,92 @@
         </div>
     </div>
 
+    <!-- Mật khẩu -->
+    @if($record->status == 0 && auth()->user()->hasPermissionTo('approve_profile'))
+    <div 
+        class="bg-yellow-50 p-4 rounded-lg border border-yellow-200"
+        x-data="{
+            password: @js($record->password ?? $record->generatePassword()),
+            copied: false,
+            generateNewPassword() {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                let newPassword = '';
+                for (let i = 0; i < 8; i++) {
+                    newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                this.password = newPassword;
+                this.savePasswordToSession();
+            },
+            savePasswordToSession() {
+                fetch('/admin/profiles/{{ $record->id }}/save-password-session', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password: this.password })
+                }).catch(error => console.log('Error saving password to session:', error));
+            }
+        }"
+        x-init="savePasswordToSession()"
+    >
+        <div class="flex items-center justify-between mb-2">
+            <label class="text-sm font-medium text-yellow-700">Mật khẩu</label>
+            <button 
+                type="button"
+                class="text-xs bg-yellow-200 hover:bg-yellow-300 text-yellow-800 px-2 py-1 rounded transition-colors"
+                x-on:click="generateNewPassword()"
+                title="Tạo mật khẩu mới"
+            >
+                Tạo mới
+            </button>
+        </div>
+        <div class="flex items-center gap-2">
+            <input 
+                type="text" 
+                x-model="password"
+                x-on:input="savePasswordToSession()"
+                class="flex-1 px-3 py-2 border border-yellow-300 rounded-md text-sm font-mono bg-white"
+                readonly
+            />
+            <button 
+                type="button"
+                class="text-yellow-600 hover:text-yellow-800 transition-colors"
+                x-on:click="navigator.clipboard.writeText(password); copied = true; setTimeout(() => copied = false, 2000)"
+                title="Sao chép mật khẩu"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+            </button>
+            <span x-show="copied" x-transition class="text-green-500 text-sm">Đã copy!</span>
+        </div>
+        <p class="text-xs text-yellow-600 mt-1">Mật khẩu sẽ được lưu khi bạn duyệt hồ sơ</p>
+    </div>
+    @elseif($record->status == 1 && $record->password)
+    <div class="bg-green-50 p-4 rounded-lg border border-green-200" x-data="{ copied: false }">
+        <div class="flex items-center justify-between mb-2">
+            <label class="text-sm font-medium text-green-700">Mật khẩu</label>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="flex-1 px-3 py-2 bg-white border border-green-300 rounded-md text-sm font-mono text-green-800">{{ $record->password }}</span>
+            <button 
+                type="button"
+                class="text-green-600 hover:text-green-800 transition-colors"
+                x-on:click="navigator.clipboard.writeText('{{ $record->password }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                title="Sao chép mật khẩu"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+            </button>
+            <span x-show="copied" x-transition class="text-green-500 text-sm">Đã copy!</span>
+        </div>
+    </div>
+    @endif
+
     <!-- Thông tin thời gian -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 gap-4">
         <div class="bg-gray-50 p-4 rounded-lg">
             <label class="text-sm font-medium text-gray-500">Ngày tạo</label>
             <p class="text-sm text-gray-900">{{ $record->created_at ? \Carbon\Carbon::parse($record->created_at)->format('d/m/Y H:i:s') : 'N/A' }}</p>
