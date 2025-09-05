@@ -53,14 +53,11 @@ class ProfileDateStatistics extends Page implements HasTable
                     ->sortable(),
                 TextColumn::make('profile_count')
                     ->label('Số lượng hồ sơ')
-                    ->formatStateUsing(function ($state, $record) {
-                        $count = $record->profile_count ?? 0;
-                        return view('filament.components.statistics-cell', [
-                            'count' => $count
-                        ]);
-                    })
-                    ->html()
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->label('Tổng')
+                    ]),
             ])
             ->paginated(false);
     }
@@ -79,12 +76,25 @@ class ProfileDateStatistics extends Page implements HasTable
                     $query->whereBetween('created_at', [
                         Carbon::parse($startDate)->startOfDay(),
                         Carbon::parse($endDate)->endOfDay()
-                    ]);
+                    ])
+                    ->where('status', '!=', 3);
                 }
             ]);
     }
 
+    public function updated($property): void
+    {
+        if (in_array($property, ['startDate', 'endDate'])) {
+            $this->validateAndFilter();
+        }
+    }
+
     public function filter(): void
+    {
+        $this->validateAndFilter();
+    }
+
+    private function validateAndFilter(): void
     {
         // Validate dates
         if (!$this->startDate || !$this->endDate) {

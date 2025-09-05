@@ -44,44 +44,32 @@ class ProfileStatistics extends Page implements HasTable
                     ->sortable(),
                 TextColumn::make('today_count')
                     ->label('Hôm nay')
-                    // ->formatStateUsing(function ($state, $record) {
-                    //     $count = $record->today_count ?? 0;
-                    //     return view('filament.components.statistics-cell', [
-                    //         'count' => $count
-                    //     ]);
-                    // })
-                    ->html()
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->label('Tổng')
+                    ]),
                 TextColumn::make('week_count')
                     ->label('Tuần này')
-                    // ->formatStateUsing(function ($state, $record) {
-                    //     $count = $record->week_count ?? 0;
-                    //     return view('filament.components.statistics-cell', [
-                    //         'count' => $count
-                    //     ]);
-                    // })
-                    ->html()
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->label('Tổng')
+                    ]),
                 TextColumn::make('month_count')
                     ->label('Tháng này')
-                    // ->formatStateUsing(function ($state, $record) {
-                    //     $count = $record->month_count ?? 0;
-                    //     return view('filament.components.statistics-cell', [
-                    //         'count' => $count
-                    //     ]);
-                    // })
-                    ->html()
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->label('Tổng')
+                    ]),
                 TextColumn::make('year_count')
                     ->label('Năm nay')
-                    // ->formatStateUsing(function ($state, $record) {
-                    //     $count = $record->year_count ?? 0;
-                    //     return view('filament.components.statistics-cell', [
-                    //         'count' => $count
-                    //     ]);
-                    // })
-                    ->html()
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->label('Tổng')
+                    ]),
             ])
             ->paginated(false);
     }
@@ -99,16 +87,20 @@ class ProfileStatistics extends Page implements HasTable
             })
             ->withCount([
                 'profiles as today_count' => function ($query) use ($today) {
-                    $query->whereDate('created_at', $today);
+                    $query->whereDate('created_at', $today)
+                          ->where('status', '!=', 3);
                 },
                 'profiles as week_count' => function ($query) use ($weekStart) {
-                    $query->where('created_at', '>=', $weekStart);
+                    $query->where('created_at', '>=', $weekStart)
+                          ->where('status', '!=', 3);
                 },
                 'profiles as month_count' => function ($query) use ($monthStart) {
-                    $query->where('created_at', '>=', $monthStart);
+                    $query->where('created_at', '>=', $monthStart)
+                          ->where('status', '!=', 3);
                 },
                 'profiles as year_count' => function ($query) use ($yearStart) {
-                    $query->where('created_at', '>=', $yearStart);
+                    $query->where('created_at', '>=', $yearStart)
+                          ->where('status', '!=', 3);
                 }
             ]);
     }
