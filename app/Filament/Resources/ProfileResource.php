@@ -46,6 +46,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
             'reject',
             'resubmit',
             'cancel',
+            'view_awaiting_approval',
         ];
     }
 

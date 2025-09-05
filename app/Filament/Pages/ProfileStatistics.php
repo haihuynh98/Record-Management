@@ -44,42 +44,42 @@ class ProfileStatistics extends Page implements HasTable
                     ->sortable(),
                 TextColumn::make('today_count')
                     ->label('Hôm nay')
-                    ->formatStateUsing(function ($state, $record) {
-                        $count = $record->today_count ?? 0;
-                        return view('filament.components.statistics-cell', [
-                            'count' => $count
-                        ]);
-                    })
+                    // ->formatStateUsing(function ($state, $record) {
+                    //     $count = $record->today_count ?? 0;
+                    //     return view('filament.components.statistics-cell', [
+                    //         'count' => $count
+                    //     ]);
+                    // })
                     ->html()
                     ->alignCenter(),
                 TextColumn::make('week_count')
                     ->label('Tuần này')
-                    ->formatStateUsing(function ($state, $record) {
-                        $count = $record->week_count ?? 0;
-                        return view('filament.components.statistics-cell', [
-                            'count' => $count
-                        ]);
-                    })
+                    // ->formatStateUsing(function ($state, $record) {
+                    //     $count = $record->week_count ?? 0;
+                    //     return view('filament.components.statistics-cell', [
+                    //         'count' => $count
+                    //     ]);
+                    // })
                     ->html()
                     ->alignCenter(),
                 TextColumn::make('month_count')
                     ->label('Tháng này')
-                    ->formatStateUsing(function ($state, $record) {
-                        $count = $record->month_count ?? 0;
-                        return view('filament.components.statistics-cell', [
-                            'count' => $count
-                        ]);
-                    })
+                    // ->formatStateUsing(function ($state, $record) {
+                    //     $count = $record->month_count ?? 0;
+                    //     return view('filament.components.statistics-cell', [
+                    //         'count' => $count
+                    //     ]);
+                    // })
                     ->html()
                     ->alignCenter(),
                 TextColumn::make('year_count')
                     ->label('Năm nay')
-                    ->formatStateUsing(function ($state, $record) {
-                        $count = $record->year_count ?? 0;
-                        return view('filament.components.statistics-cell', [
-                            'count' => $count
-                        ]);
-                    })
+                    // ->formatStateUsing(function ($state, $record) {
+                    //     $count = $record->year_count ?? 0;
+                    //     return view('filament.components.statistics-cell', [
+                    //         'count' => $count
+                    //     ]);
+                    // })
                     ->html()
                     ->alignCenter(),
             ])

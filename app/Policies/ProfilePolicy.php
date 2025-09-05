@@ -15,7 +15,7 @@ class ProfilePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_profile');
+        return $user->can('view_any_support::profile');
     }
 
     /**
@@ -23,7 +23,7 @@ class ProfilePolicy
      */
     public function view(User $user, Profile $profile): bool
     {
-        return $user->can('view_profile');
+        return $user->can('view_support::profile');
     }
 
     /**
@@ -31,7 +31,7 @@ class ProfilePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_profile');
+        return $user->can('create_support::profile');
     }
 
     /**
@@ -39,7 +39,7 @@ class ProfilePolicy
      */
     public function update(User $user, Profile $profile): bool
     {
-        return $user->can('update_profile');
+        return $user->can('update_support::profile');
     }
 
     /**
@@ -47,7 +47,7 @@ class ProfilePolicy
      */
     public function delete(User $user, Profile $profile): bool
     {
-        return $user->can('delete_profile');
+        return $user->can('delete_support::profile');
     }
 
     /**
@@ -55,7 +55,7 @@ class ProfilePolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_profile');
+        return $user->can('delete_any_support::profile');
     }
 
     /**
@@ -63,7 +63,7 @@ class ProfilePolicy
      */
     public function forceDelete(User $user, Profile $profile): bool
     {
-        return $user->can('{{ ForceDelete }}');
+        return $user->can('force_delete_support::profile');
     }
 
     /**
@@ -71,7 +71,7 @@ class ProfilePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('{{ ForceDeleteAny }}');
+        return $user->can('force_delete_any_support::profile');
     }
 
     /**
@@ -79,7 +79,7 @@ class ProfilePolicy
      */
     public function restore(User $user, Profile $profile): bool
     {
-        return $user->can('{{ Restore }}');
+        return $user->can('restore_support::profile');
     }
 
     /**
@@ -87,7 +87,7 @@ class ProfilePolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('{{ RestoreAny }}');
+        return $user->can('restore_any_support::profile');
     }
 
     /**
@@ -95,7 +95,7 @@ class ProfilePolicy
      */
     public function replicate(User $user, Profile $profile): bool
     {
-        return $user->can('{{ Replicate }}');
+        return $user->can('replicate_support::profile');
     }
 
     /**
@@ -103,6 +103,6 @@ class ProfilePolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('{{ Reorder }}');
+        return $user->can('reorder_support::profile');
     }
 }

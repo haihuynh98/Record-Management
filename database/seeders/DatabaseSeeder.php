@@ -26,7 +26,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PermissionSeeder::class,
             RoleSeeder::class,
-            DashboardChartPermissionSeeder::class
+            DashboardChartPermissionSeeder::class,
+            AwaitingApprovalProfilesPermissionSeeder::class,
         ]);
 
     }
