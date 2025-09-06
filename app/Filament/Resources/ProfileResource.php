@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Schema;
 use App\Jobs\SendResubmittedProfileNotification;
@@ -48,6 +49,21 @@ class ProfileResource extends Resource implements HasShieldPermissions
             'cancel',
             'view_awaiting_approval',
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasPermissionTo('view_any_profile') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->hasPermissionTo('create_profile') ?? false;
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return auth()->user()?->hasPermissionTo('view_profile') ?? false;
     }
 
     public static function form(Form $form): Form
