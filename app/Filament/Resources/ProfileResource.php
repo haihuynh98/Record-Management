@@ -290,7 +290,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             2 => 'danger',
                             3 => 'gray',
                             4 => 'info',
-                            5 => 'secondary',
+                            5 => 'warning', // Màu cam cho trạng thái "Chờ"
                         ];
                         
                         // Cập nhật màu cho trạng thái "Đủ điều kiện"
@@ -778,7 +778,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             2 => 'danger',
                             3 => 'gray',
                             4 => 'info',
-                            5 => 'secondary',
+                            5 => 'warning', // Màu cam cho trạng thái "Chờ"
                             default => 'warning',
                         };
                     }),
