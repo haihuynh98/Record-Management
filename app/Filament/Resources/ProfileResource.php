@@ -638,9 +638,14 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 // Clear viewing session sau khi chuyển trạng thái
                                 $record->clearViewingSession();
 
+                                // Dispatch job để gửi thông báo Telegram sau thời gian delay
+                                $delayMinutes = (int) config('services.telegram.delayed_notification_minutes', 360);
+                                \App\Jobs\SendDelayedTelegramNotification::dispatch($record, 'pending_reminder', $user->is_priority ?? false)
+                                    ->delay(now()->addMinutes($delayMinutes));
+
                                 Notification::make()
                                     ->title('Đã chuyển trạng thái')
-                                    ->body('Hồ sơ #' . $record->code . ' đã được chuyển sang trạng thái "Chờ".')
+                                    ->body('Hồ sơ #' . $record->code . ' đã được chuyển sang trạng thái "Chờ". Thông báo nhắc nhở sẽ được gửi sau ' . $delayMinutes . ' phút.')
                                     ->success()
                                     ->send();
                                     

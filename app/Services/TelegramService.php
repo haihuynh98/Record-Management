@@ -211,26 +211,29 @@ class TelegramService
     {
         $characterId = $profile->character_id ?: 'Chưa có';
         $createdBy = $profile->createdBy ? $profile->createdBy->username : 'Không xác định';
+        $approvedBy = $profile->approvedBy ? $profile->approvedBy->username : 'Hệ thống';
         
-        // Tính thời gian đã trôi qua
-        $createdAt = \Carbon\Carbon::parse($profile->created_at);
+        // Tính thời gian đã chờ
+        $approvedAt = \Carbon\Carbon::parse($profile->approved_at);
         $now = \Carbon\Carbon::now();
-        $timeElapsed = $createdAt->diffForHumans($now, true);
+        $waitingTime = $approvedAt->diffForHumans($now, true);
         
-        // Kiểm tra xem đã gửi notification bao nhiêu lần
-        $isFirstReminder = is_null($profile->last_notification_sent_at);
-        $reminderText = $isFirstReminder ? 'LẦN ĐẦU' : 'NHẮC LẠI';
+        // Tính thời gian delay đã cấu hình
+        $delayMinutes = (int) config('services.telegram.delayed_notification_minutes', 360);
+        $delayHours = round($delayMinutes / 60, 1);
         
         $message = "
-🔔 <b>NHẮC NHỞ XỬ LÝ HỒ SƠ - {$reminderText}</b> 🔔
-
+⏰ <b>THÔNG BÁO HỒ SƠ ĐÃ HẾT THỜI GIAN CHỜ</b> ⏰
 
 📋 <b>Mã hồ sơ:</b> <code>#{$profile->code}</code>
 👤 <b>ID nhân vật:</b> {$characterId}
 👨‍💼 <b>Người tạo:</b> {$createdBy}
-⏰ <b>Thời gian tạo:</b> {$profile->created_at->format('d/m/Y H:i:s')}
+👨‍⚖️ <b>Người chuyển trạng thái:</b> {$approvedBy}
+⏰ <b>Thời gian chuyển sang trạng thái Chờ:</b> {$profile->approved_at->format('d/m/Y H:i:s')}
 
-💡 <i>Hồ sơ này đang chờ xử lý, vui lòng kiểm tra và xử lý sớm nhất có thể!</i>
+✅ <b>Hồ sơ này đã hết thời gian chờ bắt buộc và có thể được xử lý ngay!</b>
+
+🔔 <i>Vui lòng kiểm tra và xử lý hồ sơ này sớm nhất có thể.</i>
 
         ";
 
