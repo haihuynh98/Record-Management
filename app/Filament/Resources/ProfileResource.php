@@ -376,8 +376,11 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->success()
                                     ->send();
                                     
-                                // Redirect về trang profile sau khi duyệt
-                                return redirect()->to('/admin/profiles');
+                                // Redirect dựa trên quyền của user
+                                $redirectUrl = $user->hasPermissionTo('view_any_profile') 
+                                    ? '/admin/profiles' 
+                                    : '/admin/awaiting-approval-profiles';
+                                return redirect()->to($redirectUrl);
                             }),
                         \Filament\Tables\Actions\Action::make('reject')
                             ->label('Từ chối')
@@ -445,7 +448,11 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 $canResubmit = $user->hasPermissionTo('resubmit_profile');
                                 
                                 if (!$canResubmit) {
-                                    return redirect()->to('/admin/profiles');
+                                    // Redirect dựa trên quyền của user
+                                    $redirectUrl = $user->hasPermissionTo('view_any_profile') 
+                                        ? '/admin/profiles' 
+                                        : '/admin/awaiting-approval-profiles';
+                                    return redirect()->to($redirectUrl);
                                 }
                             }),
                         \Filament\Tables\Actions\Action::make('resubmit')
@@ -665,8 +672,11 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->success()
                                     ->send();
                                     
-                                // Redirect về trang profile sau khi chuyển trạng thái
-                                return redirect()->to('/admin/profiles');
+                                // Redirect dựa trên quyền của user
+                                $redirectUrl = $user->hasPermissionTo('view_any_profile') 
+                                    ? '/admin/profiles' 
+                                    : '/admin/awaiting-approval-profiles';
+                                return redirect()->to($redirectUrl);
                             }),
 
                     ])
