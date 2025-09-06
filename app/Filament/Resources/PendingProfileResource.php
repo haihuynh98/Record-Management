@@ -73,7 +73,6 @@ class PendingProfileResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(50)
-            ->poll('10s')
             ->recordUrl(null)
             ->columns([
                 Tables\Columns\TextColumn::make('code')

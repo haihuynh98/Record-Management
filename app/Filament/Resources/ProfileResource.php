@@ -170,7 +170,6 @@ class ProfileResource extends Resource implements HasShieldPermissions
             ->defaultSort('created_at', 'desc')
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(50)
-            ->poll('10s')
             ->recordUrl(null)
             ->actions([
                 \Filament\Tables\Actions\Action::make('support')
