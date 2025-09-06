@@ -136,12 +136,6 @@ class SupportProfileResource extends Resource
                     ->label('Ngày tạo')
                     ->dateTime('d/m/Y H:i:s')
                     ->sortable(),
-                    
-                Tables\Columns\TextColumn::make('supportLogs_count')
-                    ->label('Số lần hỗ trợ')
-                    ->counts('supportLogs')
-                    ->badge()
-                    ->color('info'),
             ])
             ->filters([
                 //
