@@ -264,7 +264,7 @@ class SupportProfileResource extends Resource
                         
                         // Người duyệt có thể xem hồ sơ chờ duyệt
                         if ($user->hasRole('approver')) {
-                            return $record->status == 0;
+                            return $record->status == 0 || $record->status == 4;
                         }
                         
                         return false;
