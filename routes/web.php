@@ -56,8 +56,8 @@ Route::get('/admin/profiles/{id}/status', function ($id) {
     ]);
 })->middleware(['web', 'auth']);
 
-// Route để lưu password vào session
-Route::post('/admin/profiles/{id}/save-password-session', function ($id, Request $request) {
+// Route để cập nhật password trong database
+Route::post('/admin/profiles/{id}/update-password', function ($id, Request $request) {
     $profile = Profile::find($id);
     
     if (!$profile) {
@@ -69,9 +69,9 @@ Route::post('/admin/profiles/{id}/save-password-session', function ($id, Request
         return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
     }
     
-    // Chỉ cho phép lưu password cho hồ sơ chờ duyệt
-    if ($profile->status != 0) {
-        return response()->json(['success' => false, 'message' => 'Profile is not pending approval'], 400);
+    // Chỉ cho phép cập nhật password cho hồ sơ chờ duyệt/chờ và chưa lock
+    if (!in_array($profile->status, [0, 5]) || $profile->password_lock) {
+        return response()->json(['success' => false, 'message' => 'Profile is not pending approval or password is locked'], 400);
     }
     
     $password = $request->input('password');
@@ -79,9 +79,9 @@ Route::post('/admin/profiles/{id}/save-password-session', function ($id, Request
         return response()->json(['success' => false, 'message' => 'Invalid password'], 400);
     }
     
-    // Lưu password vào session
-    session(['profile_password_' . $id => $password]);
+    // Cập nhật password trong database
+    $profile->update(['password' => $password]);
     
-    return response()->json(['success' => true, 'message' => 'Password saved to session']);
+    return response()->json(['success' => true, 'message' => 'Password updated successfully']);
 })->middleware(['web', 'auth']);
 

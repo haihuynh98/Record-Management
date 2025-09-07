@@ -63,11 +63,11 @@
     </div>
 
     <!-- Mật khẩu -->
-    @if($record->status == 0 && auth()->user()->hasPermissionTo('approve_profile'))
+    @if(($record->status == 0 || $record->status == 5) && auth()->user()->hasPermissionTo('approve_profile') && !$record->password_lock)
     <div 
         class="bg-yellow-50 p-4 rounded-lg border border-yellow-200"
         x-data="{
-            password: @js($record->password ?? $record->generatePassword()),
+            password: @js($record->password),
             copied: false,
             generateNewPassword() {
                 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -76,20 +76,25 @@
                     newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
                 }
                 this.password = newPassword;
-                this.savePasswordToSession();
+                this.updatePassword();
             },
-            savePasswordToSession() {
-                fetch('/admin/profiles/{{ $record->id }}/save-password-session', {
+            updatePassword() {
+                fetch('/admin/profiles/{{ $record->id }}/update-password', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ password: this.password })
-                }).catch(error => console.log('Error saving password to session:', error));
+                }).catch(error => console.log('Error updating password:', error));
             }
         }"
-        x-init="savePasswordToSession()"
+        x-init="
+            // Tự động tạo password mới nếu password hiện tại rỗng hoặc null
+            if (!password || password.trim() === '') {
+                generateNewPassword();
+            }
+        "
     >
         <div class="flex items-center justify-between mb-2">
             <label class="text-sm font-medium text-yellow-700">Mật khẩu</label>
@@ -106,7 +111,7 @@
             <input 
                 type="text" 
                 x-model="password"
-                x-on:input="savePasswordToSession()"
+                x-on:input="updatePassword()"
                 class="flex-1 px-3 py-2 border border-yellow-300 rounded-md text-sm font-mono bg-white"
                 readonly
             />
@@ -210,7 +215,7 @@
 
 <script>
 
-// Clear session khi modal đóng (chỉ cho hồ sơ chờ duyệt)
+// Clear viewing session khi modal đóng (chỉ cho hồ sơ chờ duyệt)
 @if($record->status === 0)
 window.addEventListener('beforeunload', function() {
     fetch('/admin/profiles/{{ $record->id }}/clear-session', {
@@ -221,8 +226,6 @@ window.addEventListener('beforeunload', function() {
         }
     });
 });
-
-// Không cần Livewire events, chỉ dùng polling mechanism
 @endif
 
 // Force close modal khi status changed (for production)

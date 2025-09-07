@@ -17,6 +17,7 @@ class Profile extends Model
         'code',
         'character_id',
         'password',
+        'password_lock',
         'rejection_reason',
         'created_by',
         'approved_by',
@@ -32,6 +33,7 @@ class Profile extends Model
     protected $casts = [
         'status' => 'integer',
         'status_old' => 'integer',
+        'password_lock' => 'boolean',
         'approved_at' => 'datetime',
         'viewing_started_at' => 'datetime',
         'last_notification_sent_at' => 'datetime',
@@ -39,6 +41,17 @@ class Profile extends Model
 
     protected static function booted()
     {
+        static::creating(function ($profile) {
+            // Generate password khi tạo hồ sơ mới nếu chưa có
+            if (empty($profile->password)) {
+                $profile->password = $profile->generatePassword();
+            }
+            // Mặc định password_lock = false khi tạo mới
+            if (is_null($profile->password_lock)) {
+                $profile->password_lock = false;
+            }
+        });
+
         static::created(function ($profile) {
             // Dispatch job để gửi thông báo Telegram khi có hồ sơ mới được tạo
             SendNewProfileNotification::dispatch($profile);
@@ -246,6 +259,19 @@ class Profile extends Model
         }
         
         return $password;
+    }
+
+    /**
+     * Kiểm tra và tạo password nếu chưa có
+     */
+    public function ensurePasswordExists(): bool
+    {
+        if (empty($this->password)) {
+            $this->password = $this->generatePassword();
+            $this->save();
+            return true; // Password đã được tạo mới
+        }
+        return false; // Password đã tồn tại
     }
 
 

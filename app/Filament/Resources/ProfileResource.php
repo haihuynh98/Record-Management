@@ -249,6 +249,9 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         // Refresh record để có dữ liệu mới nhất
                         $record->refresh();
                         
+                        // Đảm bảo password tồn tại
+                        $record->ensurePasswordExists();
+                        
                         // Clear cache để tránh stale data trong production
                         if (app()->environment('production')) {
                             \Cache::forget("profile_{$record->id}");
@@ -353,21 +356,18 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 
                                 $user = auth()->user();
                                 
-                                // Lấy password từ session hoặc generate mới
-                                $password = session('profile_password_' . $record->id) ?? $record->generatePassword();
+                                // Lấy password từ database (đã được generate khi tạo hồ sơ)
+                                $password = $record->password;
                                 
                                 $record->update([
                                     'status' => 1, // Đã duyệt
-                                    'password' => $password,
+                                    'password_lock' => true, // Lock password sau khi approve
                                     'approved_at' => now(),
                                     'approved_by' => $user->id,
                                 ]);
 
                                 // Clear viewing session sau khi approve
                                 $record->clearViewingSession();
-                                
-                                // Clear password session
-                                session()->forget('profile_password_' . $record->id);
 
                                 Notification::make()
                                     ->title('Đã duyệt hồ sơ')
@@ -818,7 +818,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
 
         // Người tạo chỉ xem hồ sơ của mình và không xem hồ sơ đã hủy
         if ($user->hasRole('creator')) {
-            return $query->where('created_by', $user->id)->where('status', '!=', 3);
+            return $query->where('created_by', $user->id)->whereIn('status', [0, 1, 2]);
         }
 
         // Người duyệt chỉ xem hồ sơ chờ duyệt
