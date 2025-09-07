@@ -96,6 +96,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->rules(['regex:/^[0-9]+$/'])
                     ->validationMessages([
                         'regex' => 'Mã hồ sơ chỉ cho phép nhập số (0-9) và không có dấu cách.',
+                        'unique' => 'Mã hồ sơ này đã tồn tại. Vui lòng chọn mã khác.',
                     ])
                     ->maxLength(64),
                 Forms\Components\TextInput::make('character_id')
