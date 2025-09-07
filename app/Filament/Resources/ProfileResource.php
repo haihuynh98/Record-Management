@@ -818,7 +818,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
 
         // Người tạo chỉ xem hồ sơ của mình và không xem hồ sơ đã hủy
         if ($user->hasRole('creator')) {
-            return $query->where('created_by', $user->id)->whereIn('status', [0, 1, 2]);
+            return $query->where('created_by', $user->id)->whereIn('status', [0, 1, 2, 5]);
         }
 
         // Người duyệt chỉ xem hồ sơ chờ duyệt
