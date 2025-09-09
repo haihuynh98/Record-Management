@@ -59,4 +59,9 @@ class User extends Authenticatable implements FilamentUser, HasName
     {
         return $this->hasMany(Profile::class, 'created_by');
     }
+
+    public function approvedProfiles()
+    {
+        return $this->hasMany(Profile::class, 'approved_by');
+    }
 }

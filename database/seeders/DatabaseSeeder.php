@@ -28,6 +28,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             DashboardChartPermissionSeeder::class,
             AwaitingApprovalProfilesPermissionSeeder::class,
+            ProfileApprovedByStatisticsPermissionSeeder::class,
+            ProfileApprovedByDateStatisticsPermissionSeeder::class,
         ]);
 
     }
