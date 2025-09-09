@@ -70,7 +70,7 @@ class AwaitingApprovalProfileResource extends Resource implements HasShieldPermi
         if (!$user) return $query->whereRaw('1=0');
 
         // Chỉ hiển thị hồ sơ chờ duyệt (status = 0)
-        $query = $query->where('status', 0);
+        $query = $query->whereIn('status', [0, 6]);
 
         // Super admin và admin có thể xem tất cả hồ sơ chờ duyệt
         if ($user->hasRole('super_admin') || $user->hasRole('admin')) {

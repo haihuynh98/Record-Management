@@ -128,6 +128,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             2 => 'Từ chối',
                             3 => 'Hủy',
                             4 => 'Hỗ trợ',
+                            5 => 'Chờ',
+                            6 => 'Nộp lại',
                         ];
                         return $statuses[$state] ?? 'Chờ duyệt';
                     }),
@@ -277,6 +279,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             3 => 'Hủy',
                             4 => 'Hỗ trợ',
                             5 => 'Chờ',
+                            6 => 'Nộp lại',
                         ];
                         
                         // Kiểm tra trạng thái "Đủ điều kiện" cho status = 5 (Chờ)
@@ -294,6 +297,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             3 => 'gray',
                             4 => 'info',
                             5 => 'warning', // Màu cam cho trạng thái "Chờ"
+                            6 => 'info', // Màu xanh dương cho trạng thái "Nộp lại"
                         ];
                         
                         // Cập nhật màu cho trạng thái "Đủ điều kiện"
@@ -343,7 +347,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 }
                                 
                                 // Chỉ check permissions và status, không gọi handleViewSession ở đây
-                                return $user->hasPermissionTo('approve_profile') && $record->status == 0;
+                                return $user->hasPermissionTo('approve_profile') && in_array($record->status, [0, 6]);
                             })
                             ->action(function (?Profile $record) {
                                 if (!$record) {
@@ -412,7 +416,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 }
                                 
                                 // Chỉ check permissions và status, không gọi handleViewSession ở đây
-                                return $user->hasPermissionTo('reject_profile') && $record->status == 0;
+                                return $user->hasPermissionTo('reject_profile') && in_array($record->status, [0, 6]);
                             })
                             ->action(function (?Profile $record, array $data) {
                                 if (!$record) {
@@ -494,7 +498,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 $record->clearViewingSession();
                                 
                                 $record->update([
-                                    'status' => 0, // Chờ duyệt
+                                    'status' => 6, // Nộp lại
                                     'rejection_reason' => null, // Xóa lý do từ chối
                                 ]);
 
@@ -502,7 +506,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
 
                                 Notification::make()
                                     ->title('Đã nộp lại hồ sơ thành công')
-                                    ->body('Hồ sơ #' . $record->code . ' đã được nộp lại.')
+                                    ->body('Hồ sơ #' . $record->code . ' đã được chuyển sang trạng thái "Nộp lại".')
                                     ->success()
                                     ->send();
                             }),
@@ -637,7 +641,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 }
                                 
                                 // Chỉ hiển thị khi status là "Chờ duyệt" (0) và user có permission approve_profile
-                                return $record->status == 0 && $user->hasPermissionTo('approve_profile');
+                                return in_array($record->status, [0, 6]) && $user->hasPermissionTo('approve_profile');
                             })
                             ->action(function (?Profile $record) {
                                 if (!$record) {
@@ -760,6 +764,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             3 => 'Hủy',
                             4 => 'Hỗ trợ',
                             5 => 'Chờ',
+                            6 => 'Nộp lại',
                         ];
                         
                         // Kiểm tra trạng thái "Đủ điều kiện" cho status = 5 (Chờ)
@@ -789,6 +794,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             3 => 'gray',
                             4 => 'info',
                             5 => 'warning', // Màu cam cho trạng thái "Chờ"
+                            6 => 'info', // Màu xanh dương cho trạng thái "Nộp lại"
                             default => 'warning',
                         };
                     }),
@@ -819,7 +825,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
 
         // Người tạo chỉ xem hồ sơ của mình và không xem hồ sơ đã hủy
         if ($user->hasRole('creator')) {
-            return $query->where('created_by', $user->id)->whereIn('status', [0, 1, 2, 4, 5]);
+            return $query->where('created_by', $user->id)->whereIn('status', [0, 1, 2, 4, 5, 6]);
         }
 
         // Người duyệt chỉ xem hồ sơ chờ duyệt
