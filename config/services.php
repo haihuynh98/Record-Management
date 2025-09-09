@@ -39,6 +39,7 @@ return [
         'chat_id' => env('TELEGRAM_CHAT_ID'),
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'support_chat_id' => env('TELEGRAM_SUPPORT_CHAT_ID'),
+        'waiting_chat_id' => env('TELEGRAM_WAITING_CHAT_ID'), // Group riêng cho hồ sơ đủ điều kiện chờ
         'delayed_notification_minutes' => (int) env('TELEGRAM_DELAYED_NOTIFICATION_MINUTES', 360), // Default 6 hours
     ],
 

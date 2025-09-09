@@ -237,7 +237,10 @@ class TelegramService
 
         ";
 
-        $result = $this->sendMessage(config('services.telegram.chat_id'), $message);
+        // Gửi thông báo vào group chờ xử lý riêng biệt (nếu có cấu hình)
+        // Nếu không có cấu hình waiting_chat_id thì fallback về chat_id chính
+        $waitingChatId = config('services.telegram.waiting_chat_id', config('services.telegram.chat_id'));
+        $result = $this->sendMessage($waitingChatId, $message);
         
         // Cập nhật thời gian gửi notification cuối cùng nếu gửi thành công
         if ($result) {
