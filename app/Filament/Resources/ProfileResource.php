@@ -705,7 +705,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
 
                         // Người duyệt có thể xem hồ sơ chờ duyệt
                         if ($user->hasRole('approver')) {
-                            return $record->status == 0;
+                            return in_array($record->status, [0, 6]);
                         }
 
                         return false;
