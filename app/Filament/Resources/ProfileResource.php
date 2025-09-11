@@ -80,7 +80,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         if ($context == 'edit' || $context == 'view') {
                             return true;
                         }
-                        
+
                         $user = auth()->user();
                         if ($user?->hasPermissionTo('create_profile')) {
                             return false;
@@ -104,7 +104,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->required()
                     ->maxLength(100)
                     ->helperText('Nhập ID nhân vật (cho phép chữ và số)')
-                    ->disabled(fn (string $context) => $context == 'view'),
+                    ->disabled(fn(string $context) => $context == 'view'),
                 Forms\Components\Textarea::make('rejection_reason')
                     ->label('Lý do từ chối')
                     ->placeholder('Nhập lý do từ chối hồ sơ...')
@@ -114,13 +114,13 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         // Hiển thị ở màn hình edit và view khi status là reject (2)
                         return ($context == 'edit' || $context == 'view') && $record && $record->status == 2;
                     })
-                    ->disabled(fn (string $context) => $context == 'view')
+                    ->disabled(fn(string $context) => $context == 'view')
                     ->helperText('Chỉ hiển thị khi hồ sơ bị từ chối'),
                 // Thêm các field thông tin bổ sung cho trang view
                 Forms\Components\TextInput::make('status')
                     ->label('Trạng thái')
                     ->disabled()
-                    ->visible(fn (string $context) => $context == 'view')
+                    ->visible(fn(string $context) => $context == 'view')
                     ->formatStateUsing(function ($state) {
                         $statuses = [
                             0 => 'Chờ duyệt',
@@ -137,15 +137,15 @@ class ProfileResource extends Resource implements HasShieldPermissions
                 Forms\Components\TextInput::make('createdBy.username')
                     ->label('Người tạo')
                     ->disabled()
-                    ->visible(fn (string $context) => $context == 'view'),
+                    ->visible(fn(string $context) => $context == 'view'),
                 Forms\Components\TextInput::make('approvedBy.username')
                     ->label('Người duyệt')
                     ->disabled()
-                    ->visible(fn (string $context, $record) => $context == 'view' && $record && in_array($record->status, [1, 2, 3])),
+                    ->visible(fn(string $context, $record) => $context == 'view' && $record && in_array($record->status, [1, 2, 3])),
                 Forms\Components\TextInput::make('created_at')
                     ->label('Ngày tạo')
                     ->disabled()
-                    ->visible(fn (string $context) => $context == 'view')
+                    ->visible(fn(string $context) => $context == 'view')
                     ->formatStateUsing(function ($state) {
                         if (!$state) return '';
                         if (is_string($state)) {
@@ -156,7 +156,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                 Forms\Components\TextInput::make('approved_at')
                     ->label('Ngày duyệt')
                     ->disabled()
-                    ->visible(fn (string $context, $record) => $context == 'view' && $record && in_array($record->status, [1, 2, 3]))
+                    ->visible(fn(string $context, $record) => $context == 'view' && $record && in_array($record->status, [1, 2, 3]))
                     ->formatStateUsing(function ($state) {
                         if (!$state) return '';
                         if (is_string($state)) {
@@ -196,12 +196,12 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         if (!$record) {
                             return false;
                         }
-                        
+
                         $user = auth()->user();
                         if (!$user) {
                             return false;
                         }
-                        
+
                         // Chỉ hiển thị button hỗ trợ khi status là "Đã duyệt" (1)
                         return $record->status == 1;
                     })
@@ -214,21 +214,21 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 ->send();
                             return;
                         }
-                        
+
                         $user = auth()->user();
-                        
+
                         // Cập nhật status của profile thành hỗ trợ (4)
                         $record->update([
                             'status' => 4, // Hỗ trợ
                         ]);
-                        
+
                         // Lưu support message vào bảng support_logs
                         \App\Models\SupportLog::create([
                             'profile_id' => $record->id,
                             'user_id' => $user->id,
                             'support_message' => $data['support_message'],
                         ]);
-                        
+
                         // Dispatch job để gửi thông báo hỗ trợ
                         SendSupportRequestNotification::dispatch($record, $data['support_message'], $user);
 
@@ -248,22 +248,22 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         if (!$record) {
                             return new \Illuminate\Support\HtmlString('<div class="p-4 text-center text-gray-500">Không thể tải thông tin hồ sơ</div>');
                         }
-                        
+
                         // Refresh record để có dữ liệu mới nhất
                         $record->refresh();
-                        
+
                         // Đảm bảo password tồn tại
                         $record->ensurePasswordExists();
-                        
+
                         // Clear cache để tránh stale data trong production
                         if (app()->environment('production')) {
                             \Cache::forget("profile_{$record->id}");
                         }
-                        
+
                         // Chỉ check session cho hồ sơ chờ duyệt (status = 0)
                         if ($record->status == 0) {
                             $result = $record->handleViewSession();
-                            
+
                             if (!$result['success']) {
                                 return view('filament.resources.profile.modal-viewing', [
                                     'record' => $record,
@@ -271,7 +271,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 ]);
                             }
                         }
-                        
+
                         $statuses = [
                             0 => 'Chờ duyệt',
                             1 => 'Đã duyệt',
@@ -281,7 +281,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             5 => 'Chờ',
                             6 => 'Nộp lại',
                         ];
-                        
+
                         // Kiểm tra trạng thái "Đủ điều kiện" cho status = 5 (Chờ)
                         if ($record->status == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
                             $hoursSinceUpdate = $record->approved_at->diffInHours(now());
@@ -289,7 +289,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 $statuses[5] = 'Đủ điều kiện';
                             }
                         }
-                        
+
                         $statusColors = [
                             0 => 'warning',
                             1 => 'success',
@@ -299,7 +299,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             5 => 'warning', // Màu cam cho trạng thái "Chờ"
                             6 => 'info', // Màu xanh dương cho trạng thái "Nộp lại"
                         ];
-                        
+
                         // Cập nhật màu cho trạng thái "Đủ điều kiện"
                         if ($record->status == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
                             $hoursSinceUpdate = $record->approved_at->diffInHours(now());
@@ -307,13 +307,13 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 $statusColors[5] = 'success';
                             }
                         }
-                        
+
                         // Lấy tất cả support logs nếu status là hỗ trợ (4)
                         $supportLogs = collect();
                         if ($record->status == 4) {
                             $supportLogs = $record->supportLogs()->with('user')->latest()->get();
                         }
-                        
+
                         return view('filament.resources.profile.modal-content', [
                             'record' => $record,
                             'statuses' => $statuses,
@@ -324,7 +324,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Đóng')
                     ->modalActions([
-                        
+
                         \Filament\Tables\Actions\Action::make('approve')
                             ->label('Duyệt')
                             ->icon('heroicon-m-check')
@@ -340,12 +340,12 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 if (!$record) {
                                     return false;
                                 }
-                                
+
                                 $user = auth()->user();
                                 if (!$user) {
                                     return false;
                                 }
-                                
+
                                 // Chỉ check permissions và status, không gọi handleViewSession ở đây
                                 return $user->hasPermissionTo('approve_profile') && in_array($record->status, [0, 6]);
                             })
@@ -358,12 +358,12 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                         ->send();
                                     return;
                                 }
-                                
+
                                 $user = auth()->user();
-                                
+
                                 // Lấy password từ database (đã được generate khi tạo hồ sơ)
                                 $password = $record->password;
-                                
+
                                 $record->update([
                                     'status' => 1, // Đã duyệt
                                     'password_lock' => true, // Lock password sau khi approve
@@ -379,10 +379,10 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->body('Hồ sơ #' . $record->code . ' đã được duyệt với mật khẩu: ' . $password)
                                     ->success()
                                     ->send();
-                                    
+
                                 // Redirect dựa trên quyền của user
-                                $redirectUrl = $user->hasPermissionTo('view_any_profile') 
-                                    ? '/admin/profiles' 
+                                $redirectUrl = $user->hasPermissionTo('view_any_profile')
+                                    ? '/admin/profiles'
                                     : '/admin/awaiting-approval-profiles';
                                 return redirect()->to($redirectUrl);
                             }),
@@ -405,16 +405,16 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->minLength(10)
                                     ->maxLength(500),
                             ])
-                                                        ->visible(function (?Profile $record) {
+                            ->visible(function (?Profile $record) {
                                 if (!$record) {
                                     return false;
                                 }
-                                
+
                                 $user = auth()->user();
                                 if (!$user) {
                                     return false;
                                 }
-                                
+
                                 // Chỉ check permissions và status, không gọi handleViewSession ở đây
                                 return $user->hasPermissionTo('reject_profile') && in_array($record->status, [0, 6]);
                             })
@@ -427,9 +427,9 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                         ->send();
                                     return;
                                 }
-                                
+
                                 $user = auth()->user();
-                                
+
                                 $record->update([
                                     'status' => 2, // Từ chối
                                     'rejection_reason' => $data['rejection_reason'],
@@ -446,15 +446,15 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->title('Đã từ chối hồ sơ')
                                     ->success()
                                     ->send();
-                                
+
                                 // Kiểm tra nếu user không có quyền resubmit hoặc không phải người tạo thì redirect
                                 $user = auth()->user();
                                 $canResubmit = $user->hasPermissionTo('resubmit_profile');
-                                
+
                                 if (!$canResubmit) {
                                     // Redirect dựa trên quyền của user
-                                    $redirectUrl = $user->hasPermissionTo('view_any_profile') 
-                                        ? '/admin/profiles' 
+                                    $redirectUrl = $user->hasPermissionTo('view_any_profile')
+                                        ? '/admin/profiles'
                                         : '/admin/awaiting-approval-profiles';
                                     return redirect()->to($redirectUrl);
                                 }
@@ -474,15 +474,15 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 if (!$record) {
                                     return false;
                                 }
-                                
+
                                 $user = auth()->user();
                                 if (!$user) {
                                     return false;
                                 }
-                                
-                                return $user->hasPermissionTo('resubmit_profile') && 
-                                       $record->status == 2 && 
-                                       ($record->created_by == $user->id || $user->hasRole(['admin', 'super_admin']));
+
+                                return $user->hasPermissionTo('resubmit_profile') &&
+                                    $record->status == 2 &&
+                                    ($record->created_by == $user->id || $user->hasRole(['admin', 'super_admin']));
                             })
                             ->action(function (?Profile $record) {
                                 if (!$record) {
@@ -493,10 +493,10 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                         ->send();
                                     return;
                                 }
-                                
+
                                 // Clear viewing session trước khi resubmit
                                 $record->clearViewingSession();
-                                
+
                                 $record->update([
                                     'status' => 6, // Nộp lại
                                     'rejection_reason' => null, // Xóa lý do từ chối
@@ -525,12 +525,12 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 if (!$record) {
                                     return false;
                                 }
-                                
+
                                 $user = auth()->user();
                                 if (!$user) {
                                     return false;
                                 }
-                                
+
                                 return $user->hasPermissionTo('cancel_profile') && $record->status == 2;
                             })
                             ->action(function (?Profile $record) {
@@ -542,9 +542,9 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                         ->send();
                                     return;
                                 }
-                                
+
                                 $user = auth()->user();
-                                
+
                                 $record->update([
                                     'status' => 3, // Hủy
                                     'approved_at' => now(),
@@ -561,7 +561,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->body('Hồ sơ #' . $record->code . ' đã được hủy thành công.')
                                     ->success()
                                     ->send();
-                                    
+
                                 // Redirect về trang profile sau khi hủy
                                 return redirect()->to('/admin/profiles');
                             }),
@@ -581,12 +581,12 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 if (!$record) {
                                     return false;
                                 }
-                                
+
                                 $user = auth()->user();
                                 if (!$user) {
                                     return false;
                                 }
-                                
+
                                 // Chỉ hiển thị khi status là hỗ trợ (4) và user có permission approve_profile
                                 return $record->status == 4 && $user->hasPermissionTo('approve_profile');
                             })
@@ -599,9 +599,9 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                         ->send();
                                     return;
                                 }
-                                
+
                                 $user = auth()->user();
-                                
+
                                 // Cập nhật status về "Đã duyệt" (1)
                                 $record->update([
                                     'status' => 1, // Đã duyệt
@@ -614,7 +614,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->body('Hồ sơ #' . $record->code . ' đã được đánh dấu hoàn thành hỗ trợ và chuyển về trạng thái "Đã duyệt".')
                                     ->success()
                                     ->send();
-                                    
+
                                 // Redirect về trang profile sau khi hoàn thành
                                 return redirect()->to('/admin/profiles');
                             }),
@@ -634,12 +634,12 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 if (!$record) {
                                     return false;
                                 }
-                                
+
                                 $user = auth()->user();
                                 if (!$user) {
                                     return false;
                                 }
-                                
+
                                 // Chỉ hiển thị khi status là "Chờ duyệt" (0) và user có permission approve_profile
                                 return in_array($record->status, [0, 6]) && $user->hasPermissionTo('approve_profile');
                             })
@@ -652,9 +652,9 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                         ->send();
                                     return;
                                 }
-                                
+
                                 $user = auth()->user();
-                                
+
                                 // Cập nhật status từ "Chờ duyệt" (0) sang "Chờ" (5)
                                 $record->update([
                                     'status' => 5, // Chờ
@@ -675,10 +675,10 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                     ->body('Hồ sơ #' . $record->code . ' đã được chuyển sang trạng thái "Chờ". Thông báo nhắc nhở sẽ được gửi sau ' . $delayMinutes . ' phút.')
                                     ->success()
                                     ->send();
-                                    
+
                                 // Redirect dựa trên quyền của user
-                                $redirectUrl = $user->hasPermissionTo('view_any_profile') 
-                                    ? '/admin/profiles' 
+                                $redirectUrl = $user->hasPermissionTo('view_any_profile')
+                                    ? '/admin/profiles'
                                     : '/admin/awaiting-approval-profiles';
                                 return redirect()->to($redirectUrl);
                             }),
@@ -688,27 +688,37 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         if (!$record) {
                             return false;
                         }
-                        
+
                         $user = auth()->user();
-                        
+
                         if (!$user) return false;
-                        
+
                         // Super admin và admin có thể xem tất cả
                         if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
                             return true;
                         }
-                        
+
                         // Người tạo chỉ xem hồ sơ của mình
                         if ($user->hasRole('creator')) {
                             return $record->created_by == $user->id && $record->status != 3;
                         }
-                        
+
                         // Người duyệt có thể xem hồ sơ chờ duyệt
                         if ($user->hasRole('approver')) {
                             return $record->status == 0;
                         }
-                        
+
                         return false;
+                    }),
+                \Filament\Tables\Actions\Action::make('delete')
+                    ->label('Xóa')
+                    ->icon('heroicon-m-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(fn(Profile $record) => $record->delete())
+                    ->visible(function () {
+                        $user = auth()->user();
+                        return $user?->hasRole(['admin', 'super_admin']);
                     }),
             ])
             ->columns([
@@ -716,27 +726,27 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->label('Mã hồ sơ')
                     ->formatStateUsing(function (string $state, $record) {
                         $code = "#{$state}";
-                        
+
                         // Hiển thị icon ổ khóa nếu hồ sơ đang được xem
                         if ($record->isBeingViewed()) {
                             $viewingUser = $record->viewingUser;
                             $tooltip = $viewingUser ? "Đang được xử lý bởi: {$viewingUser->username}" : "Đang được xử lý";
                             $code .= ' <span class="inline-flex items-center justify-center w-8 h-8 text-lg font-medium text-yellow-600 bg-yellow-100 rounded-full" title="' . $tooltip . '">🔒</span>';
                         }
-                        
+
                         return $code;
                     })
                     ->html()
                     ->searchable()
                     ->copyable()
-                    ->copyableState(fn (string $state): string => "#{$state}")
+                    ->copyableState(fn(string $state): string => "#{$state}")
                     ->copyMessage('Đã sao chép mã hồ sơ vào clipboard')
                     ->copyMessageDuration(1500),
                 Tables\Columns\TextColumn::make('character_id')
                     ->label('ID nhân vật')
                     ->searchable()
                     ->copyable()
-                    ->copyableState(fn (string $state): string => $state)
+                    ->copyableState(fn(string $state): string => $state)
                     ->copyMessage('Đã sao chép ID nhân vật vào clipboard')
                     ->copyMessageDuration(1500),
                 Tables\Columns\TextColumn::make('approvedBy.username')
@@ -766,7 +776,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             5 => 'Chờ',
                             6 => 'Nộp lại',
                         ];
-                        
+
                         // Kiểm tra trạng thái "Đủ điều kiện" cho status = 5 (Chờ)
                         if ($state == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
                             $hoursSinceUpdate = $record->approved_at->diffInHours(now());
@@ -774,7 +784,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 return 'Đủ điều kiện';
                             }
                         }
-                        
+
                         return $statuses[$state] ?? 'Chờ duyệt';
                     })
                     ->badge()
@@ -786,7 +796,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 return 'success'; // Màu xanh lá cho "Đủ điều kiện"
                             }
                         }
-                        
+
                         return match ($state) {
                             0 => 'warning',
                             1 => 'success',
@@ -808,7 +818,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
 
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-//                    Tables\Actions\DeleteBulkAction::make(),
+                    //                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
