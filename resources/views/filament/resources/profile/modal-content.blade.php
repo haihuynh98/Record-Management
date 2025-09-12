@@ -63,7 +63,7 @@
     </div>
 
     <!-- Mật khẩu -->
-    @if(($record->status == 0 || $record->status == 5) && auth()->user()->hasPermissionTo('approve_profile') && !$record->password_lock)
+    @if(($record->status == 0 || $record->status == 5 || $record->status == 6) && auth()->user()->hasPermissionTo('approve_profile') && !$record->password_lock)
     <div 
         class="bg-yellow-50 p-4 rounded-lg border border-yellow-200"
         x-data="{
