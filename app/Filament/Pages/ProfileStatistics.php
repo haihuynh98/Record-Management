@@ -63,6 +63,13 @@ class ProfileStatistics extends Page implements HasTable
                         \Filament\Tables\Columns\Summarizers\Sum::make()
                             ->label('Tổng')
                     ]),
+                TextColumn::make('last_month_count')
+                    ->label('Tháng trước')
+                    ->alignCenter()
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->label('Tổng')
+                    ]),
                 TextColumn::make('year_count')
                     ->label('Năm nay')
                     ->alignCenter()
@@ -79,6 +86,8 @@ class ProfileStatistics extends Page implements HasTable
         $today = Carbon::today();
         $weekStart = Carbon::now()->startOfWeek();
         $monthStart = Carbon::now()->startOfMonth();
+        $lastMonthStart = Carbon::now()->subMonth()->startOfMonth();
+        $lastMonthEnd = Carbon::now()->subMonth()->endOfMonth();
         $yearStart = Carbon::now()->startOfYear();
 
         return User::query()
@@ -96,6 +105,10 @@ class ProfileStatistics extends Page implements HasTable
                 },
                 'profiles as month_count' => function ($query) use ($monthStart) {
                     $query->where('created_at', '>=', $monthStart)
+                          ->where('status', '!=', 3);
+                },
+                'profiles as last_month_count' => function ($query) use ($lastMonthStart, $lastMonthEnd) {
+                    $query->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
                           ->where('status', '!=', 3);
                 },
                 'profiles as year_count' => function ($query) use ($yearStart) {
