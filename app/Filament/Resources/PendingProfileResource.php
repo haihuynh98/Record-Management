@@ -43,7 +43,8 @@ class PendingProfileResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('status', 5); // Chỉ hiển thị hồ sơ có status "Chờ" (trạng thái mới)
+            ->where('status', 5) // Chỉ hiển thị hồ sơ có status "Chờ" (trạng thái mới)
+            ->where('hidden', false); // Lọc bỏ các hồ sơ đã bị ẩn
     }
 
     public static function getNavigationBadge(): ?string
@@ -51,7 +52,7 @@ class PendingProfileResource extends Resource
         if (!static::canViewAny()) {
             return null;
         }
-        return static::getModel()::where('status', 5)->count();
+        return static::getModel()::where('status', 5)->where('hidden', false)->count();
     }
 
     public static function getNavigationBadgeColor(): ?string

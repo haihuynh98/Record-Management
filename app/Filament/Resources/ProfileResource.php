@@ -841,6 +841,9 @@ class ProfileResource extends Resource implements HasShieldPermissions
 
         if (!$user) return $query->whereRaw('1=0');
 
+        // Lọc bỏ các hồ sơ đã bị ẩn
+        $query->where('hidden', false);
+
         // Super admin và admin có thể xem tất cả
         if ($user->hasRole('super_admin') || $user->hasRole('admin')) return $query;
 

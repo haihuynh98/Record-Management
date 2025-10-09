@@ -44,7 +44,8 @@ class SupportProfileResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('status', 4); // Chỉ hiển thị hồ sơ có status hỗ trợ
+            ->where('status', 4) // Chỉ hiển thị hồ sơ có status hỗ trợ
+            ->where('hidden', false); // Lọc bỏ các hồ sơ đã bị ẩn
     }
 
     public static function getNavigationBadge(): ?string
@@ -52,7 +53,7 @@ class SupportProfileResource extends Resource
         if (!static::canViewAny()) {
             return null;
         }
-        return static::getModel()::where('status', 4)->count();
+        return static::getModel()::where('status', 4)->where('hidden', false)->count();
     }
 
     public static function getNavigationBadgeColor(): ?string
