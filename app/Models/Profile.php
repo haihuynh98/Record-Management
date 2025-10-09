@@ -16,6 +16,7 @@ class Profile extends Model
     protected $fillable = [
         'code',
         'character_id',
+        'notes',
         'password',
         'password_lock',
         'rejection_reason',

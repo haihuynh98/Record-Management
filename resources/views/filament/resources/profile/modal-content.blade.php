@@ -62,6 +62,16 @@
         </div>
     </div>
 
+    <!-- Chú thích (nếu có) -->
+    @if($record->notes)
+    <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <label class="text-sm font-medium text-blue-700">Chú thích</label>
+        <div class="mt-2">
+            <p class="text-sm text-gray-800 whitespace-pre-wrap">{{ $record->notes }}</p>
+        </div>
+    </div>
+    @endif
+
     <!-- Mật khẩu -->
     @if(($record->status == 0 || $record->status == 5 || $record->status == 6) && auth()->user()->hasPermissionTo('approve_profile') && !$record->password_lock)
     <div 

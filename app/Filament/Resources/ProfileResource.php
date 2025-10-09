@@ -105,6 +105,17 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->maxLength(100)
                     ->helperText('Nhập ID nhân vật (cho phép chữ và số)')
                     ->disabled(fn(string $context) => $context == 'view'),
+                Forms\Components\Textarea::make('notes')
+                    ->label('Chú thích')
+                    ->placeholder('Nhập chú thích cho hồ sơ (không bắt buộc)...')
+                    ->maxLength(1000)
+                    ->rows(3)
+                    ->visible(function (string $context) {
+                        // Hiển thị ở màn hình create, edit và view
+                        return in_array($context, ['create', 'edit', 'view']);
+                    })
+                    ->disabled(fn(string $context) => $context == 'view')
+                    ->helperText('Thêm chú thích hoặc ghi chú về hồ sơ này'),
                 Forms\Components\Textarea::make('rejection_reason')
                     ->label('Lý do từ chối')
                     ->placeholder('Nhập lý do từ chối hồ sơ...')
