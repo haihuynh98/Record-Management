@@ -26,12 +26,6 @@ class TelegramService
                 'parse_mode' => $parseMode,
             ]);
 
-            Log::info('Telegram message sent successfully', [
-                'chat_id' => $chatId,
-                'message' => $message,
-                'response' => $response
-            ]);
-
             return $response;
         } catch (\Exception $e) {
             Log::error('Failed to send Telegram message', [
