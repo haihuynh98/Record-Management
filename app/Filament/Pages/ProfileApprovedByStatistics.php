@@ -63,6 +63,13 @@ class ProfileApprovedByStatistics extends Page implements HasTable
                         \Filament\Tables\Columns\Summarizers\Sum::make()
                             ->label('Tổng')
                     ]),
+                TextColumn::make('last_month_count')
+                    ->label('Tháng trước')
+                    ->alignCenter()
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->label('Tổng')
+                    ]),
                 TextColumn::make('year_count')
                     ->label('Năm nay')
                     ->alignCenter()
@@ -79,6 +86,8 @@ class ProfileApprovedByStatistics extends Page implements HasTable
         $today = Carbon::today();
         $weekStart = Carbon::now()->startOfWeek();
         $monthStart = Carbon::now()->startOfMonth();
+        $lastMonthStart = Carbon::now()->subMonth()->startOfMonth();
+        $lastMonthEnd = Carbon::now()->subMonth()->endOfMonth();
         $yearStart = Carbon::now()->startOfYear();
 
         return User::query()
@@ -89,20 +98,24 @@ class ProfileApprovedByStatistics extends Page implements HasTable
             ->whereHas('approvedProfiles') // Only show users who have approved at least one profile
             ->withCount([
                 'approvedProfiles as today_count' => function ($query) use ($today) {
-                    $query->whereDate('approved_at', $today)
-                          ->where('status', '!=', 3);
+                    $query->whereDate('created_at', $today)
+                          ->whereNotIn('status', [2, 3]);
                 },
                 'approvedProfiles as week_count' => function ($query) use ($weekStart) {
-                    $query->where('approved_at', '>=', $weekStart)
-                          ->where('status', '!=', 3);
+                    $query->where('created_at', '>=', $weekStart)
+                          ->whereNotIn('status', [2, 3]);
                 },
                 'approvedProfiles as month_count' => function ($query) use ($monthStart) {
-                    $query->where('approved_at', '>=', $monthStart)
-                          ->where('status', '!=', 3);
+                    $query->where('created_at', '>=', $monthStart)
+                          ->whereNotIn('status', [2, 3]);
+                },
+                'approvedProfiles as last_month_count' => function ($query) use ($lastMonthStart, $lastMonthEnd) {
+                    $query->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
+                          ->whereNotIn('status', [2, 3]);
                 },
                 'approvedProfiles as year_count' => function ($query) use ($yearStart) {
-                    $query->where('approved_at', '>=', $yearStart)
-                          ->where('status', '!=', 3);
+                    $query->where('created_at', '>=', $yearStart)
+                          ->whereNotIn('status', [2, 3]); 
                 }
             ]);
     }

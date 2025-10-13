@@ -75,11 +75,11 @@ class ProfileApprovedByDateStatistics extends Page implements HasTable
             ->whereHas('approvedProfiles') // Only show users who have approved at least one profile
             ->withCount([
                 'approvedProfiles as profile_count' => function ($query) use ($startDate, $endDate) {
-                    $query->whereBetween('approved_at', [
+                    $query->whereBetween('created_at', [
                         Carbon::parse($startDate)->startOfDay(),
                         Carbon::parse($endDate)->endOfDay()
                     ])
-                    ->where('status', '!=', 3);
+                    ->whereNotIn('status', [2, 3]);
                 }
             ]);
     }

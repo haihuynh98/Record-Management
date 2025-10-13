@@ -97,23 +97,23 @@ class ProfileStatistics extends Page implements HasTable
             ->withCount([
                 'profiles as today_count' => function ($query) use ($today) {
                     $query->whereDate('created_at', $today)
-                          ->where('status', '!=', 3);
+                          ->whereNotIn('status', [2, 3]);
                 },
                 'profiles as week_count' => function ($query) use ($weekStart) {
                     $query->where('created_at', '>=', $weekStart)
-                          ->where('status', '!=', 3);
+                          ->whereNotIn('status', [2, 3]);
                 },
                 'profiles as month_count' => function ($query) use ($monthStart) {
                     $query->where('created_at', '>=', $monthStart)
-                          ->where('status', '!=', 3);
+                          ->whereNotIn('status', [2, 3]);
                 },
                 'profiles as last_month_count' => function ($query) use ($lastMonthStart, $lastMonthEnd) {
                     $query->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
-                          ->where('status', '!=', 3);
+                          ->whereNotIn('status', [2, 3]);
                 },
                 'profiles as year_count' => function ($query) use ($yearStart) {
                     $query->where('created_at', '>=', $yearStart)
-                          ->where('status', '!=', 3);
+                          ->whereNotIn('status', [2, 3]);
                 }
             ]);
     }

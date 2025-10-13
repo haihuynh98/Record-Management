@@ -77,7 +77,7 @@ class ProfileDateStatistics extends Page implements HasTable
                         Carbon::parse($startDate)->startOfDay(),
                         Carbon::parse($endDate)->endOfDay()
                     ])
-                    ->where('status', '!=', 3);
+                    ->whereNotIn('status', [2, 3]);
                 }
             ]);
     }
