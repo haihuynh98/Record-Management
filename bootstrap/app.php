@@ -11,7 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'check.login.block' => \App\Http\Middleware\CheckLoginBlock::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
