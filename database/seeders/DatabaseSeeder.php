@@ -30,6 +30,10 @@ class DatabaseSeeder extends Seeder
             AwaitingApprovalProfilesPermissionSeeder::class,
             ProfileApprovedByStatisticsPermissionSeeder::class,
             ProfileApprovedByDateStatisticsPermissionSeeder::class,
+            OffHoursStatisticsPermissionSeeder::class,
+            OffHoursDateStatisticsPermissionSeeder::class,
+            OffHoursApprovedByStatisticsPermissionSeeder::class,
+            OffHoursApprovedByDateStatisticsPermissionSeeder::class,
         ]);
 
     }

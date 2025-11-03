@@ -19,9 +19,20 @@ class SystemConfiguration extends Page
     
     protected static ?string $title = 'Cấu hình hệ thống';
     
+    protected static ?string $navigationGroup = 'Cấu Hình';
+    
     protected static ?int $navigationSort = 100;
 
     protected static string $view = 'filament.pages.system-configuration';
+
+    public ?string $offHoursStart = null;
+    public ?string $offHoursEnd = null;
+
+    public function mount(): void
+    {
+        $this->offHoursStart = SystemSetting::getOffHoursStart() ?? '22:00';
+        $this->offHoursEnd = SystemSetting::getOffHoursEnd() ?? '02:00';
+    }
 
     public static function canAccess(): bool
     {
@@ -86,6 +97,44 @@ class SystemConfiguration extends Page
             Notification::make()
                 ->title('❌ Lỗi thay đổi trạng thái')
                 ->body('Có lỗi xảy ra khi thay đổi trạng thái chặn đăng nhập: ' . $e->getMessage())
+                ->danger()
+                ->duration(8000)
+                ->send();
+        }
+    }
+
+    public function saveOffHours(): void
+    {
+        try {
+            $this->validate([
+                'offHoursStart' => ['required', 'date_format:H:i'],
+                'offHoursEnd' => ['required', 'date_format:H:i'],
+            ]);
+
+            DB::beginTransaction();
+
+            // Lưu vào database system_settings
+            SystemSetting::setOffHoursStart($this->offHoursStart);
+            SystemSetting::setOffHoursEnd($this->offHoursEnd);
+
+            DB::commit();
+
+            Notification::make()
+                ->title('✅ Đã lưu thời gian ngoài giờ')
+                ->body("Khoảng thời gian: {$this->offHoursStart} → {$this->offHoursEnd}")
+                ->success()
+                ->duration(5000)
+                ->send();
+                
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            throw $e;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Notification::make()
+                ->title('❌ Lỗi lưu cấu hình')
+                ->body('Có lỗi xảy ra khi lưu thời gian ngoài giờ: ' . $e->getMessage())
                 ->danger()
                 ->duration(8000)
                 ->send();

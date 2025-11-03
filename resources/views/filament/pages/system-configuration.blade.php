@@ -1,26 +1,5 @@
 <x-filament-panels::page>
     <div class="space-y-6">
-        <!-- Header Section -->
-        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 border border-blue-200 dark:border-gray-700 rounded-lg p-6">
-            <div class="flex items-center space-x-3">
-                <div class="flex-shrink-0">
-                    <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                    </div>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                        Cấu hình Hệ thống
-                    </h1>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Quản lý các cài đặt và cấu hình quan trọng của hệ thống
-                    </p>
-                </div>
-            </div>
-        </div>
 
         <!-- System Status Overview -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -178,6 +157,56 @@
             </div>
         </div>
 
+        <!-- Off-hours Configuration -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0">
+                        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        Cấu hình ngoài giờ làm việc
+                    </h3>
+                </div>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Chọn khoảng thời gian ngoài giờ làm việc. Ví dụ chọn 22:00 đến 02:00 có nghĩa là từ 22h hôm nay đến 02h ngày hôm sau.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bắt đầu</label>
+                        <input type="time" wire:model.defer="offHoursStart" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500" />
+                        @error('offHoursStart')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kết thúc</label>
+                        <input type="time" wire:model.defer="offHoursEnd" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500" />
+                        @error('offHoursEnd')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div class="flex md:justify-end">
+                        <x-filament::button wire:click="saveOffHours" color="primary" icon="heroicon-o-check-circle">
+                            Lưu cấu hình
+                        </x-filament::button>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                    Khoảng thời gian hiện tại: <span class="font-medium text-gray-900 dark:text-white">{{ $this->offHoursStart ?? '22:00' }} → {{ $this->offHoursEnd ?? '02:00' }}</span>
+                    @if($this->offHoursStart && $this->offHoursEnd && $this->offHoursStart > $this->offHoursEnd)
+                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
+                            (Qua đêm)
+                        </span>
+                    @endif
+                </div>
+            </div>
+        </div>
+
         <!-- Warning Section -->
         <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
             <div class="flex">
@@ -200,38 +229,5 @@
             </div>
         </div>
 
-        <!-- Toggle Login Block Button -->
-        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                        Điều khiển Đăng nhập
-                    </h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {{ $this->getLoginBlockStatus() ? 'Hệ thống đang chặn đăng nhập' : 'Hệ thống đang cho phép đăng nhập' }}
-                    </p>
-                </div>
-                <div class="flex-shrink-0">
-                    <button 
-                        type="button"
-                        wire:click="toggleLoginBlock"
-                        wire:confirm="{{ $this->getLoginBlockStatus() ? 'Bạn có chắc chắn muốn mở khóa đăng nhập cho tất cả người dùng?\n\nTất cả người dùng có thể đăng nhập bình thường.' : 'Bạn có chắc chắn muốn chặn đăng nhập cho tất cả người dùng?\n\nTất cả người dùng hiện tại sẽ bị đăng xuất và không thể đăng nhập mới (trừ admin có quyền).' }}"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 {{ $this->getLoginBlockStatus() ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500' : 'bg-red-600 hover:bg-red-700 focus:ring-red-500' }}"
-                    >
-                        @if($this->getLoginBlockStatus())
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
-                            </svg>
-                            Mở khóa đăng nhập
-                        @else
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                            Chặn đăng nhập
-                        @endif
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 </x-filament-panels::page>
