@@ -102,9 +102,6 @@ class SupportProfileResource extends Resource
                 Tables\Columns\TextColumn::make('createdBy.username')
                     ->label('Người tạo')
                     ->formatStateUsing(function (string $state, $record) {
-                        if ($record->createdBy && $record->createdBy->roles->contains('name', 'creator') && $record->createdBy->is_priority) {
-                            return $state . ' ⭐';
-                        }
                         return $state;
                     })
                     ->searchable()

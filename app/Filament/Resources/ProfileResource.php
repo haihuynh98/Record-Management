@@ -181,7 +181,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
     public static function table(Table $table): Table
     {
         return $table
-            ->defaultSort('created_at', 'desc')
+            ->defaultSort('visible_at', 'desc')
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(50)
             ->recordUrl(null)
@@ -770,9 +770,6 @@ class ProfileResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('createdBy.username')
                     ->label('Người tạo')
                     ->formatStateUsing(function ($state, $record) {
-                        if ($record->createdBy && $record->createdBy->roles->contains('name', 'creator') && $record->createdBy->is_priority) {
-                            return $state . ' ⭐';
-                        }
                         return $state;
                     }),
                 Tables\Columns\TextColumn::make('status')
@@ -844,6 +841,9 @@ class ProfileResource extends Resource implements HasShieldPermissions
         // Lọc bỏ các hồ sơ đã bị ẩn
         $query->where('hidden', false);
 
+        // Chỉ hiển thị các hồ sơ đã đến thời gian visible
+        $query->where('visible_at', '<=', now());
+
         // Super admin và admin có thể xem tất cả
         if ($user->hasRole('super_admin') || $user->hasRole('admin')) return $query;
 
@@ -852,7 +852,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
             return $query->where('created_by', $user->id)->whereIn('status', [0, 1, 2, 4, 5, 6]);
         }
 
-        // Người duyệt chỉ xem hồ sơ chờ duyệt
+        // Người duyệt chỉ xem hồ sơ chờ duyệt VÀ đã đến thời gian hiển thị
         if ($user->hasRole('approver')) {
             return $query->where('status', 0);
         }

@@ -101,6 +101,28 @@ class UserResource extends Resource implements HasShieldPermissions
                         
                         return $creatorRole && $creatorRole->id == $selectedRoles;
                     }),
+                Forms\Components\TextInput::make('delay_minutes')
+                    ->label('Thời gian delay (phút)')
+                    ->helperText('Số phút delay trước khi hồ sơ được tạo hiển thị trong danh sách. Ví dụ: nhập 30 để hồ sơ hiển thị sau 30 phút.')
+                    ->numeric()
+                    ->minValue(0)
+                    ->maxValue(1440) // Max 24 hours (1440 minutes)
+                    ->default(0)
+                    ->suffix('phút')
+                    ->visible(function (Forms\Get $get) {
+                        $selectedRoles = $get('roles');
+                        
+                        if (!$selectedRoles) return false;
+                        
+                        // Check if any selected role is 'creator'
+                        $creatorRole = \Spatie\Permission\Models\Role::where('name', 'creator')->first();
+                        
+                        if (is_array($selectedRoles)) {
+                            return $creatorRole && in_array($creatorRole->id, $selectedRoles);
+                        }
+                        
+                        return $creatorRole && $creatorRole->id == $selectedRoles;
+                    }),
             ]);
     }
 
@@ -112,9 +134,6 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->label('Tên người dùng')
                     ->searchable()
                     ->formatStateUsing(function ($state, $record) {
-                        if ($record && $record->roles->contains('name', 'creator') && $record->is_priority) {
-                            return $state . ' ⭐';
-                        }
                         return $state;
                     }),
                 Tables\Columns\TextColumn::make('email')

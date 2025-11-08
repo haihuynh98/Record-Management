@@ -33,6 +33,7 @@ class AwaitingApprovalProfileResource extends Resource implements HasShieldPermi
         $count = static::getEloquentQuery()
             ->where('status', 0)
             ->where('hidden', false)
+            ->where('visible_at', '<=', now())
             ->count();
 
         return $count > 0 ? (string) $count : null;
@@ -43,6 +44,7 @@ class AwaitingApprovalProfileResource extends Resource implements HasShieldPermi
         $count = static::getEloquentQuery()
             ->where('status', 0)
             ->where('hidden', false)
+            ->where('visible_at', '<=', now())
             ->count();
 
         return $count > 0 ? 'warning' : null;
@@ -75,12 +77,15 @@ class AwaitingApprovalProfileResource extends Resource implements HasShieldPermi
         $query = $query->whereIn('status', [0, 6])
             ->where('hidden', false);
 
+        // Chỉ hiển thị các hồ sơ đã đến thời gian visible
+        $query->where('visible_at', '<=', now());
+
         // Super admin và admin có thể xem tất cả hồ sơ chờ duyệt
         if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
             return $query->orderBy('created_at', 'asc');
         }
 
-        // Người duyệt chỉ xem hồ sơ chờ duyệt
+        // Người duyệt chỉ xem hồ sơ chờ duyệt VÀ đã đến thời gian hiển thị
         if ($user->hasRole('approver')) {
             return $query->orderBy('created_at', 'asc');
         }

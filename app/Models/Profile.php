@@ -30,6 +30,7 @@ class Profile extends Model
         'viewing_started_at',
         'viewing_session_id',
         'last_notification_sent_at',
+        'visible_at',
     ];
 
     protected $casts = [
@@ -40,6 +41,7 @@ class Profile extends Model
         'approved_at' => 'datetime',
         'viewing_started_at' => 'datetime',
         'last_notification_sent_at' => 'datetime',
+        'visible_at' => 'datetime',
     ];
 
     protected static function booted()
@@ -53,11 +55,24 @@ class Profile extends Model
             if (is_null($profile->password_lock)) {
                 $profile->password_lock = false;
             }
+            
+            // Set visible_at dựa trên delay_minutes của creator
+            if (!isset($profile->visible_at) && isset($profile->created_by)) {
+                $creator = User::find($profile->created_by);
+                $delayMinutes = $creator?->delay_minutes ?? 0;
+                $profile->visible_at = now()->addMinutes($delayMinutes);
+            }
         });
 
         static::created(function ($profile) {
             // Dispatch job để gửi thông báo Telegram khi có hồ sơ mới được tạo
-            SendNewProfileNotification::dispatch($profile);
+            // Delay theo thời gian visible_at để thông báo được gửi khi hồ sơ thực sự hiển thị
+            if ($profile->visible_at && $profile->visible_at > now()) {
+                SendNewProfileNotification::dispatch($profile)->delay($profile->visible_at);
+            } else {
+                // Nếu visible_at đã qua hoặc không có, gửi ngay lập tức
+                SendNewProfileNotification::dispatch($profile);
+            }
         });
 
         static::updated(function ($profile) {

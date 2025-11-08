@@ -44,7 +44,8 @@ class PendingProfileResource extends Resource
     {
         return parent::getEloquentQuery()
             ->where('status', 5) // Chỉ hiển thị hồ sơ có status "Chờ" (trạng thái mới)
-            ->where('hidden', false); // Lọc bỏ các hồ sơ đã bị ẩn
+            ->where('hidden', false) // Lọc bỏ các hồ sơ đã bị ẩn
+            ->where('visible_at', '<=', now()); // Chỉ hiển thị các hồ sơ đã đến thời gian visible
     }
 
     public static function getNavigationBadge(): ?string
@@ -101,9 +102,6 @@ class PendingProfileResource extends Resource
                 Tables\Columns\TextColumn::make('createdBy.username')
                     ->label('Người tạo')
                     ->formatStateUsing(function (string $state, $record) {
-                        if ($record->createdBy && $record->createdBy->roles->contains('name', 'creator') && $record->createdBy->is_priority) {
-                            return $state . ' ⭐';
-                        }
                         return $state;
                     })
                     ->searchable()

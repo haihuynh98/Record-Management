@@ -19,6 +19,7 @@ class User extends Authenticatable implements FilamentUser, HasName
         'email',
         'password',
         'is_priority',
+        'delay_minutes',
     ];
 
     /**
@@ -42,6 +43,7 @@ class User extends Authenticatable implements FilamentUser, HasName
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_priority' => 'boolean',
+            'delay_minutes' => 'integer',
         ];
     }
 
