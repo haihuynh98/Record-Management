@@ -16,6 +16,9 @@ class Profile extends Model
     protected $fillable = [
         'code',
         'character_id',
+        'is_exchange',
+        'exchange_character_id',
+        'exchange_profile_code',
         'notes',
         'password',
         'password_lock',
@@ -38,6 +41,7 @@ class Profile extends Model
         'status_old' => 'integer',
         'password_lock' => 'boolean',
         'hidden' => 'boolean',
+        'is_exchange' => 'boolean',
         'approved_at' => 'datetime',
         'viewing_started_at' => 'datetime',
         'last_notification_sent_at' => 'datetime',

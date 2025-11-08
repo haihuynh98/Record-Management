@@ -60,6 +60,50 @@
                 @endif
             </p>
         </div>
+        
+        @if($record->is_exchange && $record->exchange_profile_code)
+        <div class="bg-gray-50 p-4 rounded-lg" x-data="{ copied: false }">
+            <div class="flex items-center justify-between">
+                <label class="text-sm font-medium text-purple-700">ID Hồ Sơ Giao Lưu</label>
+                <button 
+                    type="button"
+                    class="text-gray-400 hover:text-gray-600 transition-colors"
+                    x-on:click="navigator.clipboard.writeText('#{{ $record->exchange_profile_code }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                    title="Sao chép ID hồ sơ giao lưu"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex items-center gap-2">
+                <p class="text-lg font-semibold text-purple-800">#{{ $record->exchange_profile_code }}</p>
+                <span x-show="copied" x-transition class="text-green-500 text-sm">Đã copy!</span>
+            </div>
+        </div>
+        @endif
+        
+        @if($record->is_exchange && $record->exchange_character_id)
+        <div class="bg-gray-50 p-4 rounded-lg" x-data="{ copied: false }">
+            <div class="flex items-center justify-between">
+                <label class="text-sm font-medium text-purple-700">ID Giao Lưu</label>
+                <button 
+                    type="button"
+                    class="text-gray-400 hover:text-gray-600 transition-colors"
+                    x-on:click="navigator.clipboard.writeText('{{ $record->exchange_character_id }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                    title="Sao chép ID giao lưu"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex items-center gap-2">
+                <p class="text-lg font-semibold text-purple-800">{{ $record->exchange_character_id }}</p>
+                <span x-show="copied" x-transition class="text-green-500 text-sm">Đã copy!</span>
+            </div>
+        </div>
+        @endif
     </div>
 
     <!-- Chú thích (nếu có) -->

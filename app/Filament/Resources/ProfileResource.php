@@ -70,6 +70,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
     {
         return $form
             ->schema([
+                
                 Forms\Components\TextInput::make('code')
                     ->label('Mã hồ sơ')
                     ->required()
@@ -105,6 +106,48 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     ->maxLength(100)
                     ->helperText('Nhập ID nhân vật (cho phép chữ và số)')
                     ->disabled(fn(string $context) => $context == 'view'),
+                
+                // Section hồ sơ giao lưu
+                Forms\Components\Section::make('Thông tin giao lưu')
+                    ->schema([
+                        Forms\Components\Checkbox::make('is_exchange')
+                            ->label('Hồ sơ giao lưu')
+                            ->reactive()
+                            ->columnSpanFull()
+                            ->disabled(fn(string $context) => $context == 'view'),
+                        
+                        Forms\Components\TextInput::make('exchange_profile_code')
+                            ->label('ID Hồ Sơ Giao Lưu')
+                            ->prefix('#')
+                            ->inputMode('numeric')
+                            ->extraInputAttributes([
+                                'pattern' => '[0-9]*',
+                                'onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57',
+                                'oninput' => 'this.value = this.value.replace(/[^0-9]/g, "")'
+                            ])
+                            ->rules(['regex:/^[0-9]+$/'])
+                            ->validationMessages([
+                                'regex' => 'ID Hồ Sơ Giao Lưu chỉ cho phép nhập số (0-9) và không có dấu cách.',
+                            ])
+                            ->maxLength(64)
+                            ->visible(fn(callable $get) => $get('is_exchange'))
+                            ->disabled(fn(string $context) => $context == 'view'),
+                        
+                            Forms\Components\TextInput::make('exchange_character_id')
+                            ->label('ID Giao Lưu')
+                            ->maxLength(100)
+                            ->helperText('Nhập ID nhân vật (cho phép chữ và số)')
+                            ->visible(fn(callable $get) => $get('is_exchange'))
+                            ->disabled(fn(string $context) => $context == 'view'),
+                        
+                    ])
+                    ->columns(2)
+                    ->visible(function (string $context) {
+                        // Hiển thị ở màn hình create, edit và view
+                        return in_array($context, ['create', 'edit', 'view']);
+                    }),
+                
+
                 Forms\Components\Textarea::make('notes')
                     ->label('Chú thích')
                     ->placeholder('Nhập chú thích cho hồ sơ (không bắt buộc)...')
@@ -175,7 +218,8 @@ class ProfileResource extends Resource implements HasShieldPermissions
                         }
                         return $state->format('d/m/Y H:i:s');
                     }),
-            ]);
+            ])
+            ->columns(2);
     }
 
     public static function table(Table $table): Table
@@ -293,6 +337,11 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             6 => 'Nộp lại',
                         ];
 
+                        // Kiểm tra hồ sơ giao lưu cho status = 0 hoặc 6 (Chờ duyệt hoặc Nộp lại)
+                        if ($record->status == 0 &&$record->is_exchange) {
+                            $statuses[$record->status] = 'Giao Lưu';
+                        }
+
                         // Kiểm tra trạng thái "Đủ điều kiện" cho status = 5 (Chờ)
                         if ($record->status == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
                             $hoursSinceUpdate = $record->approved_at->diffInHours(now());
@@ -310,6 +359,11 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             5 => 'warning', // Màu cam cho trạng thái "Chờ"
                             6 => 'info', // Màu xanh dương cho trạng thái "Nộp lại"
                         ];
+
+                        // Cập nhật màu cho hồ sơ giao lưu
+                        if ($record->status == 0 && $record->is_exchange) {
+                            $statusColors[0] = 'info';
+                        }
 
                         // Cập nhật màu cho trạng thái "Đủ điều kiện"
                         if ($record->status == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
@@ -775,6 +829,11 @@ class ProfileResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('status')
                     ->label('Trạng thái')
                     ->formatStateUsing(function ($state, $record) {
+                        // Kiểm tra hồ sơ giao lưu cho status = 0 hoặc 6 (Chờ duyệt hoặc Nộp lại)
+                        if (in_array($state, [0, 6]) && $record->is_exchange) {
+                            return 'Giao Lưu';
+                        }
+
                         $statuses = [
                             0 => 'Chờ duyệt',
                             1 => 'Đã duyệt',
@@ -797,6 +856,11 @@ class ProfileResource extends Resource implements HasShieldPermissions
                     })
                     ->badge()
                     ->color(function ($state, $record) {
+                        // Màu tím cho hồ sơ giao lưu ở trạng thái chờ duyệt hoặc nộp lại
+                        if (in_array($state, [0]) && $record->is_exchange) {
+                            return 'info';
+                        }
+
                         // Kiểm tra trạng thái "Đủ điều kiện" cho status = 5 (Chờ)
                         if ($state == 5 && $record->approved_at && $record->approved_at instanceof \Carbon\Carbon) {
                             $hoursSinceUpdate = $record->approved_at->diffInHours(now());
