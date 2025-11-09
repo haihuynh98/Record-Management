@@ -130,6 +130,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                                 'regex' => 'ID Hồ Sơ Giao Lưu chỉ cho phép nhập số (0-9) và không có dấu cách.',
                             ])
                             ->maxLength(64)
+                            ->required(fn(callable $get) => $get('is_exchange'))
                             ->visible(fn(callable $get) => $get('is_exchange'))
                             ->disabled(fn(string $context) => $context == 'view'),
                         
@@ -137,6 +138,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             ->label('ID Giao Lưu')
                             ->maxLength(100)
                             ->helperText('Nhập ID nhân vật (cho phép chữ và số)')
+                            ->required(fn(callable $get) => $get('is_exchange'))
                             ->visible(fn(callable $get) => $get('is_exchange'))
                             ->disabled(fn(string $context) => $context == 'view'),
                         

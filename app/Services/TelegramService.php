@@ -156,6 +156,19 @@ class TelegramService
         $characterId = $profile->character_id ?: 'Chưa có';
         $createdBy = $profile->createdBy ? $profile->createdBy->username : 'Không xác định';
         
+        // Xây dựng nội dung giao lưu nếu có
+        $exchangeInfo = '';
+        if ($profile->is_exchange) {
+            $exchangeProfileCode = $profile->exchange_profile_code ?: 'Chưa có';
+            $exchangeCharacterId = $profile->exchange_character_id ?: 'Chưa có';
+            
+            $exchangeInfo = "
+🔄 <b>Thông tin giao lưu:</b>
+📋 <b>ID Hồ Sơ Giao Lưu:</b> <code>#{$exchangeProfileCode}</code>
+👤 <b>ID Giao Lưu:</b> {$exchangeCharacterId}
+";
+        }
+        
         $message = "
 🆕 <b>THÔNG BÁO HỒ SƠ MỚI ĐƯỢC TẠO</b> 🆕
 
@@ -163,7 +176,7 @@ class TelegramService
 👤 <b>ID nhân vật:</b> {$characterId}
 👨‍💼 <b>Người tạo:</b> {$createdBy}
 📊 <b>Trạng thái:</b> Chờ xử lý
-
+{$exchangeInfo}
 🔍 <i>Hồ sơ mới đã được tạo và đang chờ xử lý!</i>
 
         ";

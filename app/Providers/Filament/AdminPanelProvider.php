@@ -94,6 +94,13 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
+            ->navigationGroups([
+                'Hồ sơ',
+                'Báo cáo',
+                'Thống kê ngoài giờ',
+                'Người dùng',
+                'Cấu Hình',
+            ])
             ->profile(EditProfile::class)
             ->databaseNotifications();
     }
