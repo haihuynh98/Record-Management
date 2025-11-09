@@ -69,13 +69,26 @@ class Profile extends Model
         });
 
         static::created(function ($profile) {
-            // Dispatch job để gửi thông báo Telegram khi có hồ sơ mới được tạo
-            // Delay theo thời gian visible_at để thông báo được gửi khi hồ sơ thực sự hiển thị
+            // 1. Dispatch job gửi thông báo "Hồ sơ mới" khi profile visible
             if ($profile->visible_at && $profile->visible_at > now()) {
                 SendNewProfileNotification::dispatch($profile)->delay($profile->visible_at);
             } else {
-                // Nếu visible_at đã qua hoặc không có, gửi ngay lập tức
                 SendNewProfileNotification::dispatch($profile);
+            }
+            
+            // 2. Dispatch job gửi thông báo "Nhắc nhở" sau khi visible + reminder_minutes
+            $reminderMinutes = \App\Models\SystemSetting::getNewProfileReminderMinutes();
+            
+            if ($reminderMinutes > 0) {
+                // Tính thời gian gửi nhắc nhở = visible_at + reminder_minutes
+                $visibleAt = $profile->visible_at && $profile->visible_at > now() 
+                    ? $profile->visible_at 
+                    : now();
+                
+                $reminderAt = \Carbon\Carbon::parse($visibleAt)->addMinutes($reminderMinutes);
+                
+                \App\Jobs\SendNewProfileReminderNotification::dispatch($profile)->delay($reminderAt);
+                
             }
         });
 

@@ -130,4 +130,24 @@ class SystemSetting extends Model
             return $datetime->gte($startDateTime) && $datetime->lte($endDateTime);
         }
     }
+
+    /**
+     * Get configured new profile reminder minutes (sau khi visible)
+     */
+    public static function getNewProfileReminderMinutes(): int
+    {
+        return (int) static::getValue('new_profile_reminder_minutes', 0);
+    }
+
+    /**
+     * Set new profile reminder minutes
+     */
+    public static function setNewProfileReminderMinutes(int $minutes): void
+    {
+        static::setValue(
+            'new_profile_reminder_minutes',
+            (string) $minutes,
+            'Thời gian nhắc nhở sau khi hồ sơ visible (phút) - 0 = tắt'
+        );
+    }
 }

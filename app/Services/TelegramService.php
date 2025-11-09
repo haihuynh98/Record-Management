@@ -299,4 +299,54 @@ class TelegramService
         
         return $result;
     }
+
+    /**
+     * Gửi thông báo nhắc nhở hồ sơ mới chưa được xử lý
+     */
+    public function sendNewProfileReminderNotification($profile)
+    {
+        $characterId = $profile->character_id ?: 'Chưa có';
+        $createdBy = $profile->createdBy ? $profile->createdBy->username : 'Không xác định';
+        
+        // Tính thời gian đã chờ từ lúc visible
+        $visibleAt = $profile->visible_at ? \Carbon\Carbon::parse($profile->visible_at) : $profile->created_at;
+        $waitingTime = $visibleAt->diffForHumans(now(), true);
+        
+        // Xây dựng nội dung giao lưu nếu có
+        $exchangeInfo = '';
+        if ($profile->is_exchange) {
+            $exchangeProfileCode = $profile->exchange_profile_code ?: 'Chưa có';
+            $exchangeCharacterId = $profile->exchange_character_id ?: 'Chưa có';
+            
+            $exchangeInfo = "
+🔄 <b>Thông tin giao lưu:</b>
+📋 <b>ID Hồ Sơ Giao Lưu:</b> <code>#{$exchangeProfileCode}</code>
+👤 <b>ID Giao Lưu:</b> {$exchangeCharacterId}
+";
+        }
+        
+        $message = "
+⏰ <b>NHẮC NHỞ: HỒ SƠ CHƯA ĐƯỢC XỬ LÝ</b> ⏰
+
+📋 <b>Mã hồ sơ:</b> <code>#{$profile->code}</code>
+👤 <b>ID nhân vật:</b> {$characterId}
+👨‍💼 <b>Người tạo:</b> {$createdBy}
+📊 <b>Trạng thái:</b> Chờ xử lý
+{$exchangeInfo}
+⚠️ <i>Hồ sơ này vẫn chưa được xử lý, vui lòng kiểm tra!</i>
+
+        ";
+
+        // Sử dụng chat_id của group nhắc nhở riêng (nếu có cấu hình)
+        // Nếu không có cấu hình reminder_chat_id thì fallback về chat_id chính
+        $reminderChatId = config('services.telegram.reminder_chat_id', config('services.telegram.chat_id'));
+        $result = $this->sendMessage($reminderChatId, $message);
+        
+        // Cập nhật thời gian gửi notification cuối cùng nếu gửi thành công
+        if ($result) {
+            $profile->update(['last_notification_sent_at' => now()]);
+        }
+        
+        return $result;
+    }
 }

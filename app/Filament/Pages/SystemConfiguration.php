@@ -27,11 +27,13 @@ class SystemConfiguration extends Page
 
     public ?string $offHoursStart = null;
     public ?string $offHoursEnd = null;
+    public ?int $newProfileReminderMinutes = null;
 
     public function mount(): void
     {
         $this->offHoursStart = SystemSetting::getOffHoursStart() ?? '22:00';
         $this->offHoursEnd = SystemSetting::getOffHoursEnd() ?? '02:00';
+        $this->newProfileReminderMinutes = SystemSetting::getNewProfileReminderMinutes();
     }
 
     public static function canAccess(): bool
@@ -135,6 +137,45 @@ class SystemConfiguration extends Page
             Notification::make()
                 ->title('❌ Lỗi lưu cấu hình')
                 ->body('Có lỗi xảy ra khi lưu thời gian ngoài giờ: ' . $e->getMessage())
+                ->danger()
+                ->duration(8000)
+                ->send();
+        }
+    }
+
+    public function saveNewProfileReminderSettings(): void
+    {
+        try {
+            $this->validate([
+                'newProfileReminderMinutes' => ['required', 'integer', 'min:0', 'max:1440'],
+            ]);
+
+            DB::beginTransaction();
+
+            SystemSetting::setNewProfileReminderMinutes($this->newProfileReminderMinutes);
+
+            DB::commit();
+
+            $status = $this->newProfileReminderMinutes > 0 
+                ? "Đã bật: {$this->newProfileReminderMinutes} phút sau khi visible"
+                : "Đã tắt tính năng nhắc nhở";
+
+            Notification::make()
+                ->title('✅ Đã lưu cấu hình nhắc nhở')
+                ->body($status)
+                ->success()
+                ->duration(5000)
+                ->send();
+                
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            throw $e;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Notification::make()
+                ->title('❌ Lỗi lưu cấu hình')
+                ->body('Có lỗi xảy ra khi lưu cấu hình nhắc nhở: ' . $e->getMessage())
                 ->danger()
                 ->duration(8000)
                 ->send();
