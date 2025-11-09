@@ -30,6 +30,8 @@ class PendingProfileResource extends Resource
 
     protected static ?string $navigationGroup = 'Hồ sơ';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function canCreate(): bool
     {
         return false; // Không cho phép tạo mới hồ sơ chờ duyệt

@@ -87,23 +87,9 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->label('Người dùng ưu tiên')
                     ->helperText('Đánh dấu người dùng này là ưu tiên')
                     ->default(false)
-                    ->visible(function (Forms\Get $get) {
-                        $selectedRoles = $get('roles');
-                        
-                        if (!$selectedRoles) return false;
-                        
-                        // Check if any selected role is 'creator'
-                        $creatorRole = \Spatie\Permission\Models\Role::where('name', 'creator')->first();
-                        
-                        if (is_array($selectedRoles)) {
-                            return $creatorRole && in_array($creatorRole->id, $selectedRoles);
-                        }
-                        
-                        return $creatorRole && $creatorRole->id == $selectedRoles;
-                    }),
+                    ->visible(false),
                 Forms\Components\TextInput::make('delay_minutes')
-                    ->label('Thời gian delay (phút)')
-                    ->helperText('Số phút delay trước khi hồ sơ được tạo hiển thị trong danh sách. Ví dụ: nhập 30 để hồ sơ hiển thị sau 30 phút.')
+                    ->label('Thời gian (phút)')
                     ->numeric()
                     ->minValue(0)
                     ->maxValue(1440) // Max 24 hours (1440 minutes)
@@ -146,16 +132,7 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->falseIcon('heroicon-o-star')
                     ->trueColor('warning')
                     ->falseColor('gray')
-                    ->visible(function ($record) {
-                        return $record && $record->roles->contains('name', 'creator');
-                    })
-                    ->getStateUsing(function ($record) {
-                        // Only show star if user has creator role AND is_priority is true
-                        if ($record && $record->roles->contains('name', 'creator') && $record->is_priority) {
-                            return true;
-                        }
-                        return false;
-                    }),
+                    ->visible(false),
                 Tables\Columns\TextColumn::make('roles.name')
                     ->label('Vai trò')
                     ->badge()

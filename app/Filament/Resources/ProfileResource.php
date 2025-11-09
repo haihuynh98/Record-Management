@@ -697,19 +697,7 @@ class ProfileResource extends Resource implements HasShieldPermissions
                             })
                             ->modalSubmitActionLabel('Có, chuyển trạng thái')
                             ->modalCancelActionLabel('Không, hủy bỏ')
-                            ->visible(function (?Profile $record) {
-                                if (!$record) {
-                                    return false;
-                                }
-
-                                $user = auth()->user();
-                                if (!$user) {
-                                    return false;
-                                }
-
-                                // Chỉ hiển thị khi status là "Chờ duyệt" (0) và user có permission approve_profile
-                                return in_array($record->status, [0, 6]) && $user->hasPermissionTo('approve_profile');
-                            })
+                            ->visible(false)
                             ->action(function (?Profile $record) {
                                 if (!$record) {
                                     Notification::make()
@@ -907,19 +895,21 @@ class ProfileResource extends Resource implements HasShieldPermissions
         // Lọc bỏ các hồ sơ đã bị ẩn
         $query->where('hidden', false);
 
-        // Chỉ hiển thị các hồ sơ đã đến thời gian visible
-        $query->where('visible_at', '<=', now());
-
-        // Super admin và admin có thể xem tất cả
-        if ($user->hasRole('super_admin') || $user->hasRole('admin')) return $query;
+        // Super admin và admin có thể xem tất cả (bao gồm cả điều kiện visible_at)
+        if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
+            $query->where('visible_at', '<=', now());
+            return $query;
+        }
 
         // Người tạo chỉ xem hồ sơ của mình và không xem hồ sơ đã hủy
+        // KHÔNG áp dụng điều kiện visible_at để họ thấy hồ sơ ngay sau khi tạo
         if ($user->hasRole('creator')) {
             return $query->where('created_by', $user->id)->whereIn('status', [0, 1, 2, 4, 5, 6]);
         }
 
         // Người duyệt chỉ xem hồ sơ chờ duyệt VÀ đã đến thời gian hiển thị
         if ($user->hasRole('approver')) {
+            $query->where('visible_at', '<=', now());
             return $query->where('status', 0);
         }
 
