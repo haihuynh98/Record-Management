@@ -205,6 +205,97 @@
     </div>
     @endif
 
+    <!-- Mật khẩu giao lưu (chỉ cho hồ sơ giao lưu) -->
+    @if($record->is_exchange)
+        @if(($record->status == 0 || $record->status == 5 || $record->status == 6) && auth()->user()->hasPermissionTo('approve_profile') && !$record->password_lock)
+        <div 
+            class="bg-purple-50 p-4 rounded-lg border border-purple-200"
+            x-data="{
+                exchangePassword: @js($record->exchange_password ?? ''),
+                copiedExchange: false,
+                init() {
+                    // Tự động tạo exchange password mới nếu password hiện tại rỗng hoặc null
+                    if (!this.exchangePassword || this.exchangePassword.trim() === '') {
+                        this.generateNewExchangePassword();
+                    }
+                },
+                generateNewExchangePassword() {
+                    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                    let newPassword = '';
+                    for (let i = 0; i < 8; i++) {
+                        newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    this.exchangePassword = newPassword;
+                    this.updateExchangePassword();
+                },
+                updateExchangePassword() {
+                    fetch('/admin/profiles/{{ $record->id }}/update-exchange-password', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ exchange_password: this.exchangePassword })
+                    }).catch(error => console.log('Error updating exchange password:', error));
+                }
+            }"
+        >
+            <div class="flex items-center justify-between mb-2">
+                <label class="text-sm font-medium text-purple-700">Mật khẩu giao lưu</label>
+                <button 
+                    type="button"
+                    class="text-xs bg-purple-200 hover:bg-purple-300 text-purple-800 px-2 py-1 rounded transition-colors"
+                    x-on:click="generateNewExchangePassword()"
+                    title="Tạo mật khẩu giao lưu mới"
+                >
+                    Tạo mới
+                </button>
+            </div>
+            <div class="flex items-center gap-2">
+                <input 
+                    type="text" 
+                    x-model="exchangePassword"
+                    x-on:input="updateExchangePassword()"
+                    class="flex-1 px-3 py-2 border border-purple-300 rounded-md text-sm font-mono bg-white"
+                    readonly
+                />
+                <button 
+                    type="button"
+                    class="text-purple-600 hover:text-purple-800 transition-colors"
+                    x-on:click="navigator.clipboard.writeText(exchangePassword); copiedExchange = true; setTimeout(() => copiedExchange = false, 2000)"
+                    title="Sao chép mật khẩu giao lưu"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                </button>
+                <span x-show="copiedExchange" x-transition class="text-green-500 text-sm">Đã copy!</span>
+            </div>
+            <p class="text-xs text-purple-600 mt-1">Mật khẩu giao lưu sẽ được lưu khi bạn duyệt hồ sơ</p>
+        </div>
+        @elseif($record->status == 1 && $record->exchange_password)
+        <div class="bg-purple-50 p-4 rounded-lg border border-purple-200" x-data="{ copiedExchange: false }">
+            <div class="flex items-center justify-between mb-2">
+                <label class="text-sm font-medium text-purple-700">Mật khẩu giao lưu</label>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="flex-1 px-3 py-2 bg-white border border-purple-300 rounded-md text-sm font-mono text-purple-800">{{ $record->exchange_password }}</span>
+                <button 
+                    type="button"
+                    class="text-purple-600 hover:text-purple-800 transition-colors"
+                    x-on:click="navigator.clipboard.writeText('{{ $record->exchange_password }}'); copiedExchange = true; setTimeout(() => copiedExchange = false, 2000)"
+                    title="Sao chép mật khẩu giao lưu"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                </button>
+                <span x-show="copiedExchange" x-transition class="text-green-500 text-sm">Đã copy!</span>
+            </div>
+        </div>
+        @endif
+    @endif
+
     <!-- Thông tin thời gian -->
     <div class="grid grid-cols-1 gap-4">
         <div class="bg-gray-50 p-4 rounded-lg">

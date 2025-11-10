@@ -85,3 +85,36 @@ Route::post('/admin/profiles/{id}/update-password', function ($id, Request $requ
     return response()->json(['success' => true, 'message' => 'Password updated successfully']);
 })->middleware(['web', 'auth']);
 
+// Route để cập nhật exchange password trong database
+Route::post('/admin/profiles/{id}/update-exchange-password', function ($id, Request $request) {
+    $profile = Profile::find($id);
+    
+    if (!$profile) {
+        return response()->json(['success' => false, 'message' => 'Profile not found'], 404);
+    }
+    
+    $user = auth()->user();
+    if (!$user || !$user->hasPermissionTo('approve_profile')) {
+        return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+    }
+    
+    // Chỉ cho phép cập nhật exchange password cho hồ sơ giao lưu, chờ duyệt/chờ và chưa lock
+    if (!$profile->is_exchange) {
+        return response()->json(['success' => false, 'message' => 'Profile is not an exchange profile'], 400);
+    }
+    
+    if (!in_array($profile->status, [0, 5, 6]) || $profile->password_lock) {
+        return response()->json(['success' => false, 'message' => 'Profile is not pending approval or password is locked'], 400);
+    }
+    
+    $exchangePassword = $request->input('exchange_password');
+    if (!$exchangePassword || strlen($exchangePassword) < 6) {
+        return response()->json(['success' => false, 'message' => 'Invalid exchange password'], 400);
+    }
+    
+    // Cập nhật exchange password trong database
+    $profile->update(['exchange_password' => $exchangePassword]);
+    
+    return response()->json(['success' => true, 'message' => 'Exchange password updated successfully']);
+})->middleware(['web', 'auth']);
+

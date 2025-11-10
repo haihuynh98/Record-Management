@@ -19,6 +19,7 @@ class Profile extends Model
         'is_exchange',
         'exchange_character_id',
         'exchange_profile_code',
+        'exchange_password',
         'notes',
         'password',
         'password_lock',
