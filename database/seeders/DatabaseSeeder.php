@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             OffHoursDateStatisticsPermissionSeeder::class,
             OffHoursApprovedByStatisticsPermissionSeeder::class,
             OffHoursApprovedByDateStatisticsPermissionSeeder::class,
+            ViewingSessionsPermissionSeeder::class,
         ]);
 
     }
