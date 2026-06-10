@@ -75,8 +75,9 @@ Route::post('/admin/profiles/{id}/update-password', function ($id, Request $requ
     }
     
     $password = $request->input('password');
-    if (!$password || strlen($password) < 6) {
-        return response()->json(['success' => false, 'message' => 'Invalid password'], 400);
+    $passwordError = Profile::validatePassword($password);
+    if ($passwordError) {
+        return response()->json(['success' => false, 'message' => $passwordError], 400);
     }
     
     // Cập nhật password trong database
@@ -108,8 +109,9 @@ Route::post('/admin/profiles/{id}/update-exchange-password', function ($id, Requ
     }
     
     $exchangePassword = $request->input('exchange_password');
-    if (!$exchangePassword || strlen($exchangePassword) < 6) {
-        return response()->json(['success' => false, 'message' => 'Invalid exchange password'], 400);
+    $exchangePasswordError = Profile::validatePassword($exchangePassword);
+    if ($exchangePasswordError) {
+        return response()->json(['success' => false, 'message' => $exchangePasswordError], 400);
     }
     
     // Cập nhật exchange password trong database

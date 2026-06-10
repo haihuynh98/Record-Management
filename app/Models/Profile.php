@@ -281,19 +281,53 @@ class Profile extends Model
         }
     }
 
+    public static function passwordRequiresSpecialChar(): bool
+    {
+        return (bool) config('profile.password_require_special_char', false);
+    }
+
+    public static function passwordHasSpecialChar(string $password): bool
+    {
+        return (bool) preg_match('/[^a-zA-Z0-9]/', $password);
+    }
+
+    public static function validatePassword(?string $password): ?string
+    {
+        if (!$password || strlen($password) < 6) {
+            return 'Mật khẩu phải có ít nhất 6 ký tự';
+        }
+
+        if (static::passwordRequiresSpecialChar() && !static::passwordHasSpecialChar($password)) {
+            return 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt';
+        }
+
+        return null;
+    }
+
     /**
      * Generate password tự động
      */
     public function generatePassword(): string
     {
-        // Tạo password 8 ký tự bao gồm chữ hoa, chữ thường và số
-        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        $password = '';
-        
-        for ($i = 0; $i < 8; $i++) {
-            $password .= $characters[rand(0, strlen($characters) - 1)];
+        $letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        $numbers = '0123456789';
+        $special = '!@#$%^&*';
+        $characters = $letters . $numbers;
+
+        if (static::passwordRequiresSpecialChar()) {
+            $characters .= $special;
         }
-        
+
+        $password = '';
+
+        for ($i = 0; $i < 8; $i++) {
+            $password .= $characters[random_int(0, strlen($characters) - 1)];
+        }
+
+        if (static::passwordRequiresSpecialChar() && !static::passwordHasSpecialChar($password)) {
+            $password[random_int(0, 7)] = $special[random_int(0, strlen($special) - 1)];
+        }
+
         return $password;
     }
 

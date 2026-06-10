@@ -430,6 +430,16 @@ class ProfileResource extends Resource implements HasShieldPermissions
 
                                 // Lấy password từ database (đã được generate khi tạo hồ sơ)
                                 $password = $record->password;
+                                $passwordError = Profile::validatePassword($password);
+
+                                if ($passwordError) {
+                                    Notification::make()
+                                        ->title('Không thể duyệt hồ sơ')
+                                        ->body($passwordError)
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
 
                                 $record->update([
                                     'status' => 1, // Đã duyệt

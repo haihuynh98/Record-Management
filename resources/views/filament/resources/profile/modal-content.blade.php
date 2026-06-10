@@ -123,16 +123,46 @@
         x-data="{
             password: @js($record->password),
             copied: false,
-            generateNewPassword() {
-                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            passwordError: '',
+            requireSpecialChar: @js(config('profile.password_require_special_char')),
+            specialChars: '!@#$%^&*',
+            buildRandomPassword() {
+                let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                if (this.requireSpecialChar) {
+                    chars += this.specialChars;
+                }
                 let newPassword = '';
                 for (let i = 0; i < 8; i++) {
                     newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
                 }
-                this.password = newPassword;
+                if (this.requireSpecialChar && !/[^a-zA-Z0-9]/.test(newPassword)) {
+                    const pos = Math.floor(Math.random() * 8);
+                    const specialChar = this.specialChars.charAt(Math.floor(Math.random() * this.specialChars.length));
+                    newPassword = newPassword.substring(0, pos) + specialChar + newPassword.substring(pos + 1);
+                }
+                return newPassword;
+            },
+            validatePassword(value) {
+                if (!value || value.length < 6) {
+                    return 'Mật khẩu phải có ít nhất 6 ký tự';
+                }
+                if (this.requireSpecialChar && !/[^a-zA-Z0-9]/.test(value)) {
+                    return 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt';
+                }
+                return '';
+            },
+            generateNewPassword() {
+                this.password = this.buildRandomPassword();
+                this.passwordError = '';
                 this.updatePassword();
             },
             updatePassword() {
+                const error = this.validatePassword(this.password);
+                if (error) {
+                    this.passwordError = error;
+                    return;
+                }
+                this.passwordError = '';
                 fetch('/admin/profiles/{{ $record->id }}/update-password', {
                     method: 'POST',
                     headers: {
@@ -140,7 +170,14 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ password: this.password })
-                }).catch(error => console.log('Error updating password:', error));
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success && data.message) {
+                        this.passwordError = data.message;
+                    }
+                })
+                .catch(error => console.log('Error updating password:', error));
             }
         }"
         x-init="
@@ -181,7 +218,13 @@
             </button>
             <span x-show="copied" x-transition class="text-green-500 text-sm">Đã copy!</span>
         </div>
-        <p class="text-xs text-yellow-600 mt-1">Mật khẩu sẽ được lưu khi bạn duyệt hồ sơ</p>
+        <p class="text-xs text-yellow-600 mt-1">
+            Mật khẩu sẽ được lưu khi bạn duyệt hồ sơ
+            @if(config('profile.password_require_special_char'))
+                <span class="block">Yêu cầu: ít nhất 1 ký tự đặc biệt</span>
+            @endif
+        </p>
+        <p x-show="passwordError" x-text="passwordError" class="text-xs text-red-600 mt-1"></p>
     </div>
     @elseif($record->status == 1 && $record->password)
     <div class="bg-green-50 p-4 rounded-lg border border-green-200" x-data="{ copied: false }">
@@ -213,22 +256,51 @@
             x-data="{
                 exchangePassword: @js($record->exchange_password ?? ''),
                 copiedExchange: false,
+                exchangePasswordError: '',
+                requireSpecialChar: @js(config('profile.password_require_special_char')),
+                specialChars: '!@#$%^&*',
                 init() {
-                    // Tự động tạo exchange password mới nếu password hiện tại rỗng hoặc null
                     if (!this.exchangePassword || this.exchangePassword.trim() === '') {
                         this.generateNewExchangePassword();
                     }
                 },
-                generateNewExchangePassword() {
-                    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                buildRandomPassword() {
+                    let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                    if (this.requireSpecialChar) {
+                        chars += this.specialChars;
+                    }
                     let newPassword = '';
                     for (let i = 0; i < 8; i++) {
                         newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
                     }
-                    this.exchangePassword = newPassword;
+                    if (this.requireSpecialChar && !/[^a-zA-Z0-9]/.test(newPassword)) {
+                        const pos = Math.floor(Math.random() * 8);
+                        const specialChar = this.specialChars.charAt(Math.floor(Math.random() * this.specialChars.length));
+                        newPassword = newPassword.substring(0, pos) + specialChar + newPassword.substring(pos + 1);
+                    }
+                    return newPassword;
+                },
+                validatePassword(value) {
+                    if (!value || value.length < 6) {
+                        return 'Mật khẩu phải có ít nhất 6 ký tự';
+                    }
+                    if (this.requireSpecialChar && !/[^a-zA-Z0-9]/.test(value)) {
+                        return 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt';
+                    }
+                    return '';
+                },
+                generateNewExchangePassword() {
+                    this.exchangePassword = this.buildRandomPassword();
+                    this.exchangePasswordError = '';
                     this.updateExchangePassword();
                 },
                 updateExchangePassword() {
+                    const error = this.validatePassword(this.exchangePassword);
+                    if (error) {
+                        this.exchangePasswordError = error;
+                        return;
+                    }
+                    this.exchangePasswordError = '';
                     fetch('/admin/profiles/{{ $record->id }}/update-exchange-password', {
                         method: 'POST',
                         headers: {
@@ -236,7 +308,14 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({ exchange_password: this.exchangePassword })
-                    }).catch(error => console.log('Error updating exchange password:', error));
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success && data.message) {
+                            this.exchangePasswordError = data.message;
+                        }
+                    })
+                    .catch(error => console.log('Error updating exchange password:', error));
                 }
             }"
         >
@@ -271,7 +350,13 @@
                 </button>
                 <span x-show="copiedExchange" x-transition class="text-green-500 text-sm">Đã copy!</span>
             </div>
-            <p class="text-xs text-purple-600 mt-1">Mật khẩu giao lưu sẽ được lưu khi bạn duyệt hồ sơ</p>
+            <p class="text-xs text-purple-600 mt-1">
+                Mật khẩu giao lưu sẽ được lưu khi bạn duyệt hồ sơ
+                @if(config('profile.password_require_special_char'))
+                    <span class="block">Yêu cầu: ít nhất 1 ký tự đặc biệt</span>
+                @endif
+            </p>
+            <p x-show="exchangePasswordError" x-text="exchangePasswordError" class="text-xs text-red-600 mt-1"></p>
         </div>
         @elseif($record->status == 1 && $record->exchange_password)
         <div class="bg-purple-50 p-4 rounded-lg border border-purple-200" x-data="{ copiedExchange: false }">
