@@ -1,0 +1,98 @@
+/* Fastcall CRM — dark blue + gold brand overrides */
+
+.fi-sidebar .fi-brand-text {
+    color: #fff;
+}
+
+.fi-simple-layout .fi-brand-text {
+    color: rgb(var(--primary-800));
+}
+
+.fi-sidebar:not(.fi-sidebar-open) .fi-brand-text {
+    display: none;
+}
+
+.fi-ta {
+    border-radius: 0.5rem;
+    border: 1px solid rgb(229 231 235);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.fi-ta-header {
+    background: linear-gradient(to right, rgb(var(--primary-50)), rgb(var(--primary-100)));
+    border-bottom: 1px solid rgb(var(--primary-200));
+}
+
+.fi-ta-header-cell {
+    color: rgb(var(--primary-900));
+    font-weight: 600;
+}
+
+.fi-card {
+    border-radius: 0.75rem;
+    border: 1px solid rgb(229 231 235);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.fi-btn-color-primary {
+    background: linear-gradient(to right, rgb(var(--primary-600)), rgb(var(--primary-700))) !important;
+}
+
+.fi-btn-color-primary:hover {
+    background: linear-gradient(to right, rgb(var(--primary-700)), rgb(var(--primary-800))) !important;
+}
+
+.fi-sidebar {
+    background: linear-gradient(to bottom, rgb(var(--primary-950)), rgb(var(--primary-900)));
+    border-right: 1px solid rgb(var(--primary-800));
+}
+
+.fi-sidebar-header {
+    border-bottom: 1px solid rgb(var(--primary-800) / 0.6);
+}
+
+.fi-sidebar-item-button {
+    color: rgb(var(--primary-100));
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.fi-sidebar-item-button:hover {
+    background-color: rgb(var(--primary-800) / 0.6);
+    color: #fff;
+}
+
+.fi-sidebar-item-active .fi-sidebar-item-button {
+    background-color: rgb(var(--primary-800) / 0.8);
+    color: rgb(var(--warning-300));
+    border-right: 2px solid rgb(var(--warning-500));
+}
+
+.fi-sidebar-group-label {
+    color: rgb(var(--primary-300));
+}
+
+.fi-sidebar-item-icon {
+    color: rgb(var(--primary-200));
+}
+
+.fi-sidebar-item-active .fi-sidebar-item-icon {
+    color: rgb(var(--warning-400));
+}
+
+.statistics-card {
+    background: linear-gradient(to bottom right, rgb(var(--primary-50)), rgb(var(--warning-50)));
+    border-radius: 0.5rem;
+    padding: 1rem;
+    border: 1px solid rgb(var(--primary-100));
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    transition: box-shadow 0.2s;
+}
+
+.statistics-card:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.fi-fo-field-wrp:focus-within {
+    border-color: rgb(var(--primary-500));
+    box-shadow: 0 0 0 2px rgb(var(--primary-200));
+}

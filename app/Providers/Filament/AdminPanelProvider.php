@@ -10,6 +10,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Assets\Css;
 use Filament\Support\Colors\Color;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -28,40 +29,20 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->darkMode(false)
-            ->brandName('Hệ thống Quản lý Hồ sơ')
+            ->brandName('Fastcall CRM')
             ->brandLogo(fn () => view('filament.components.logo'))
-            ->brandLogoHeight('2.5rem')
+            ->brandLogoHeight('2.75rem')
             ->favicon(asset('images/icon.png'))
             ->id('admin')
             ->path('admin')
             ->login(Login::class)
             ->colors([
-                'primary' => [
-                    50 => '239, 246, 255',
-                    100 => '219, 234, 254',
-                    200 => '191, 219, 254',
-                    300 => '147, 197, 253',
-                    400 => '96, 165, 250',
-                    500 => '59, 130, 246',
-                    600 => '37, 99, 235',
-                    700 => '29, 78, 216',
-                    800 => '30, 64, 175',
-                    900 => '30, 58, 138',
-                    950 => '23, 37, 84',
-                ],
-                'success' => [
-                    50 => '240, 253, 244',
-                    100 => '220, 252, 231',
-                    200 => '187, 247, 208',
-                    300 => '134, 239, 172',
-                    400 => '74, 222, 128',
-                    500 => '34, 197, 94',
-                    600 => '22, 163, 74',
-                    700 => '21, 128, 61',
-                    800 => '22, 101, 52',
-                    900 => '20, 83, 45',
-                    950 => '5, 46, 22',
-                ],
+                'primary' => Color::hex('#003d7a'),
+                'warning' => Color::hex('#a67c00'),
+                'success' => Color::hex('#15803d'),
+            ])
+            ->assets([
+                Css::make('fastcall-crm-theme', resource_path('css/filament/admin/custom.css')),
             ])
             ->font('Inter')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
@@ -98,6 +79,7 @@ class AdminPanelProvider extends PanelProvider
                 'Hồ sơ',
                 'Báo cáo',
                 'Thống kê ngoài giờ',
+                'Người chơi VIP',
                 'Người dùng',
                 'Cấu Hình',
             ])
