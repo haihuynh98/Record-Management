@@ -1,32 +1,32 @@
 <x-filament-panels::page>
     <div class="space-y-6">
         <!-- Filter Form -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Bộ lọc thống kê</h3>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Bộ lọc thống kê</h3>
             
             <div class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Từ ngày
                         </label>
                         <input 
                             type="date" 
                             id="start_date"
                             wire:model.live="startDate"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         >
                     </div>
                     
                     <div>
-                        <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Đến ngày
                         </label>
                         <input 
                             type="date" 
                             id="end_date"
                             wire:model.live="endDate"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         >
                     </div>
                 </div>
@@ -58,16 +58,16 @@
         </div>
 
         <!-- Statistics Table -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                     Thống kê hồ sơ hủy theo ngày
                 </h3>
-                <p class="text-sm text-gray-600 mt-1">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     Hiển thị số lượng hồ sơ hủy được tạo trong khoảng thời gian: 
-                    <span class="font-medium">{{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }}</span> 
+                    <span class="font-medium text-gray-900 dark:text-white">{{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }}</span> 
                     đến 
-                    <span class="font-medium">{{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}</span>
+                    <span class="font-medium text-gray-900 dark:text-white">{{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}</span>
                 </p>
             </div>
             
@@ -75,4 +75,3 @@
         </div>
     </div>
 </x-filament-panels::page>
-

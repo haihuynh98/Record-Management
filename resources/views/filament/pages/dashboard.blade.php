@@ -20,48 +20,48 @@
         <!-- Quick Actions -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <a href="{{ route('filament.admin.resources.profiles.create') }}" class="group">
-                <div class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 group-hover:border-primary-300">
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow duration-200 group-hover:border-primary-300 dark:group-hover:border-primary-600">
                     <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center group-hover:bg-primary-200 transition-colors duration-200">
-                            <svg class="w-6 h-6 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center group-hover:bg-primary-200 dark:group-hover:bg-primary-800 transition-colors duration-200">
+                            <svg class="w-6 h-6 text-primary-700 dark:text-primary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                             </svg>
                         </div>
                         <div>
-                            <h3 class="font-semibold text-gray-900 group-hover:text-primary-700 transition-colors duration-200">Tạo hồ sơ mới</h3>
-                            <p class="text-sm text-gray-600">Thêm hồ sơ mới vào hệ thống</p>
+                            <h3 class="font-semibold text-gray-900 dark:text-white group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors duration-200">Tạo hồ sơ mới</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Thêm hồ sơ mới vào hệ thống</p>
                         </div>
                     </div>
                 </div>
             </a>
 
             <a href="{{ route('filament.admin.pages.profile-statistics') }}" class="group">
-                <div class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 group-hover:border-warning-300">
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow duration-200 group-hover:border-warning-300 dark:group-hover:border-warning-600">
                     <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-warning-100 rounded-lg flex items-center justify-center group-hover:bg-warning-200 transition-colors duration-200">
-                            <svg class="w-6 h-6 text-warning-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-12 h-12 bg-warning-100 dark:bg-warning-900 rounded-lg flex items-center justify-center group-hover:bg-warning-200 dark:group-hover:bg-warning-800 transition-colors duration-200">
+                            <svg class="w-6 h-6 text-warning-700 dark:text-warning-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                             </svg>
                         </div>
                         <div>
-                            <h3 class="font-semibold text-gray-900 group-hover:text-warning-700 transition-colors duration-200">Xem thống kê</h3>
-                            <p class="text-sm text-gray-600">Theo dõi hiệu suất xử lý hồ sơ</p>
+                            <h3 class="font-semibold text-gray-900 dark:text-white group-hover:text-warning-700 dark:group-hover:text-warning-300 transition-colors duration-200">Xem thống kê</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Theo dõi hiệu suất xử lý hồ sơ</p>
                         </div>
                     </div>
                 </div>
             </a>
 
             <a href="{{ route('filament.admin.resources.profiles.index') }}" class="group">
-                <div class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 group-hover:border-primary-300">
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow duration-200 group-hover:border-primary-300 dark:group-hover:border-primary-600">
                     <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-primary-50 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors duration-200">
-                            <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-12 h-12 bg-primary-50 dark:bg-primary-950 rounded-lg flex items-center justify-center group-hover:bg-primary-100 dark:group-hover:bg-primary-900 transition-colors duration-200">
+                            <svg class="w-6 h-6 text-primary-600 dark:text-primary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
                             </svg>
                         </div>
                         <div>
-                            <h3 class="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors duration-200">Quản lý hồ sơ</h3>
-                            <p class="text-sm text-gray-600">Xem và chỉnh sửa tất cả hồ sơ</p>
+                            <h3 class="font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-300 transition-colors duration-200">Quản lý hồ sơ</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Xem và chỉnh sửa tất cả hồ sơ</p>
                         </div>
                     </div>
                 </div>

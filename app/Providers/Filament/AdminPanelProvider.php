@@ -28,7 +28,6 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
             ->default()
-            ->darkMode(false)
             ->brandName('Fastcall CRM')
             ->brandLogo(fn () => view('filament.components.logo'))
             ->brandLogoHeight('2.75rem')
