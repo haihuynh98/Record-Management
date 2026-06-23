@@ -38,7 +38,17 @@ class SupportProfileResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasPermissionTo('view_any_support::profile') ?? false;
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $user->checkPermissionTo('view_any_support::profile');
     }
 
     public static function getEloquentQuery(): Builder

@@ -7,10 +7,10 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
-class ViewSupportProfilesPermissionSeeder extends Seeder
+class PendingProfilePermissionSeeder extends Seeder
 {
     /**
-     * Permissions for SupportProfileResource (Filament Shield naming).
+     * Permissions for PendingProfileResource (Filament Shield naming).
      */
     public function run(): void
     {
@@ -32,7 +32,7 @@ class ViewSupportProfilesPermissionSeeder extends Seeder
         ];
 
         $permissions = array_map(
-            fn (string $prefix) => "{$prefix}_support::profile",
+            fn (string $prefix) => "{$prefix}_pending::profile",
             $prefixes
         );
 
@@ -47,6 +47,6 @@ class ViewSupportProfilesPermissionSeeder extends Seeder
             }
         }
 
-        $this->command?->info('Support profile permissions created and assigned to admin roles.');
+        $this->command?->info('Pending profile permissions created and assigned to admin roles.');
     }
 }

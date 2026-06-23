@@ -26,6 +26,13 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PermissionSeeder::class,
             RoleSeeder::class,
+            ViewSupportProfilesPermissionSeeder::class,
+            PendingProfilePermissionSeeder::class,
+            ResolveSupportPermissionSeeder::class,
+            SystemSettingsSeeder::class,
+            SystemConfigurationPermissionSeeder::class,
+            AwaitingApprovalProfileResourcePermissionSeeder::class,
+            ProfileDateStatisticsPermissionSeeder::class,
             DashboardChartPermissionSeeder::class,
             AwaitingApprovalProfilesPermissionSeeder::class,
             ProfileApprovedByStatisticsPermissionSeeder::class,
