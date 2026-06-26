@@ -281,54 +281,92 @@ class Profile extends Model
         }
     }
 
-    public static function passwordRequiresSpecialChar(): bool
-    {
-        return (bool) config('profile.password_require_special_char', false);
-    }
-
     public static function passwordHasSpecialChar(string $password): bool
     {
         return (bool) preg_match('/[^a-zA-Z0-9]/', $password);
     }
 
-    public static function validatePassword(?string $password): ?string
+    public static function passwordHasDigit(string $password): bool
     {
-        if (!$password || strlen($password) < 6) {
-            return 'Mật khẩu phải có ít nhất 6 ký tự';
+        return (bool) preg_match('/\d/', $password);
+    }
+
+    public static function passwordHasUppercase(string $password): bool
+    {
+        return (bool) preg_match('/[A-Z]/', $password);
+    }
+
+    public static function passwordHasLowercase(string $password): bool
+    {
+        return (bool) preg_match('/[a-z]/', $password);
+    }
+
+    private static function randomCharFrom(string $pool): string
+    {
+        return $pool[random_int(0, strlen($pool) - 1)];
+    }
+
+    private static function shuffleString(string $value): string
+    {
+        $chars = str_split($value);
+
+        for ($i = count($chars) - 1; $i > 0; $i--) {
+            $j = random_int(0, $i);
+            [$chars[$i], $chars[$j]] = [$chars[$j], $chars[$i]];
         }
 
-        if (static::passwordRequiresSpecialChar() && !static::passwordHasSpecialChar($password)) {
+        return implode('', $chars);
+    }
+
+    public static function validatePassword(?string $password): ?string
+    {
+        if (!$password || strlen($password) < 8) {
+            return 'Mật khẩu phải có ít nhất 8 ký tự';
+        }
+
+        if (!static::passwordHasSpecialChar($password)) {
             return 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt';
+        }
+
+        if (!static::passwordHasDigit($password)) {
+            return 'Mật khẩu phải có ít nhất 1 số';
+        }
+
+        if (!static::passwordHasUppercase($password)) {
+            return 'Mật khẩu phải có ít nhất 1 chữ hoa';
+        }
+
+        if (!static::passwordHasLowercase($password)) {
+            return 'Mật khẩu phải có ít nhất 1 chữ thường';
         }
 
         return null;
     }
 
     /**
-     * Generate password tự động
+     * Generate password tự động — đảm bảo có chữ hoa, chữ thường, số và ký tự đặc biệt
      */
     public function generatePassword(): string
     {
-        $letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $lowercase = 'abcdefghijklmnopqrstuvwxyz';
         $numbers = '0123456789';
         $special = '!@#$%^&*';
-        $characters = $letters . $numbers;
+        $pool = $uppercase . $lowercase . $numbers . $special;
 
-        if (static::passwordRequiresSpecialChar()) {
-            $characters .= $special;
+        $password = [
+            static::randomCharFrom($uppercase),
+            static::randomCharFrom($lowercase),
+            static::randomCharFrom($numbers),
+            static::randomCharFrom($special),
+        ];
+
+        $length = 8;
+        while (count($password) < $length) {
+            $password[] = static::randomCharFrom($pool);
         }
 
-        $password = '';
-
-        for ($i = 0; $i < 8; $i++) {
-            $password .= $characters[random_int(0, strlen($characters) - 1)];
-        }
-
-        if (static::passwordRequiresSpecialChar() && !static::passwordHasSpecialChar($password)) {
-            $password[random_int(0, 7)] = $special[random_int(0, strlen($special) - 1)];
-        }
-
-        return $password;
+        return static::shuffleString(implode('', $password));
     }
 
     /**

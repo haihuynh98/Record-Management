@@ -124,30 +124,42 @@
             password: @js($record->password),
             copied: false,
             passwordError: '',
-            requireSpecialChar: @js(config('profile.password_require_special_char')),
             specialChars: '!@#$%^&*',
             buildRandomPassword() {
-                let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-                if (this.requireSpecialChar) {
-                    chars += this.specialChars;
+                const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+                const numbers = '0123456789';
+                const pool = uppercase + lowercase + numbers + this.specialChars;
+                const chars = [
+                    uppercase.charAt(Math.floor(Math.random() * uppercase.length)),
+                    lowercase.charAt(Math.floor(Math.random() * lowercase.length)),
+                    numbers.charAt(Math.floor(Math.random() * numbers.length)),
+                    this.specialChars.charAt(Math.floor(Math.random() * this.specialChars.length)),
+                ];
+                while (chars.length < 8) {
+                    chars.push(pool.charAt(Math.floor(Math.random() * pool.length)));
                 }
-                let newPassword = '';
-                for (let i = 0; i < 8; i++) {
-                    newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+                for (let i = chars.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [chars[i], chars[j]] = [chars[j], chars[i]];
                 }
-                if (this.requireSpecialChar && !/[^a-zA-Z0-9]/.test(newPassword)) {
-                    const pos = Math.floor(Math.random() * 8);
-                    const specialChar = this.specialChars.charAt(Math.floor(Math.random() * this.specialChars.length));
-                    newPassword = newPassword.substring(0, pos) + specialChar + newPassword.substring(pos + 1);
-                }
-                return newPassword;
+                return chars.join('');
             },
             validatePassword(value) {
-                if (!value || value.length < 6) {
-                    return 'Mật khẩu phải có ít nhất 6 ký tự';
+                if (!value || value.length < 8) {
+                    return 'Mật khẩu phải có ít nhất 8 ký tự';
                 }
-                if (this.requireSpecialChar && !/[^a-zA-Z0-9]/.test(value)) {
+                if (!/[^a-zA-Z0-9]/.test(value)) {
                     return 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt';
+                }
+                if (!/\d/.test(value)) {
+                    return 'Mật khẩu phải có ít nhất 1 số';
+                }
+                if (!/[A-Z]/.test(value)) {
+                    return 'Mật khẩu phải có ít nhất 1 chữ hoa';
+                }
+                if (!/[a-z]/.test(value)) {
+                    return 'Mật khẩu phải có ít nhất 1 chữ thường';
                 }
                 return '';
             },
@@ -181,8 +193,7 @@
             }
         }"
         x-init="
-            // Tự động tạo password mới nếu password hiện tại rỗng hoặc null
-            if (!password || password.trim() === '') {
+            if (!password || password.trim() === '' || validatePassword(password)) {
                 generateNewPassword();
             }
         "
@@ -220,9 +231,7 @@
         </div>
         <p class="text-xs text-yellow-600 mt-1">
             Mật khẩu sẽ được lưu khi bạn duyệt hồ sơ
-            @if(config('profile.password_require_special_char'))
-                <span class="block">Yêu cầu: ít nhất 1 ký tự đặc biệt</span>
-            @endif
+            <span class="block">Yêu cầu: tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt</span>
         </p>
         <p x-show="passwordError" x-text="passwordError" class="text-xs text-red-600 mt-1"></p>
     </div>
@@ -257,35 +266,47 @@
                 exchangePassword: @js($record->exchange_password ?? ''),
                 copiedExchange: false,
                 exchangePasswordError: '',
-                requireSpecialChar: @js(config('profile.password_require_special_char')),
                 specialChars: '!@#$%^&*',
                 init() {
-                    if (!this.exchangePassword || this.exchangePassword.trim() === '') {
+                    if (!this.exchangePassword || this.exchangePassword.trim() === '' || this.validatePassword(this.exchangePassword)) {
                         this.generateNewExchangePassword();
                     }
                 },
                 buildRandomPassword() {
-                    let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-                    if (this.requireSpecialChar) {
-                        chars += this.specialChars;
+                    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+                    const numbers = '0123456789';
+                    const pool = uppercase + lowercase + numbers + this.specialChars;
+                    const chars = [
+                        uppercase.charAt(Math.floor(Math.random() * uppercase.length)),
+                        lowercase.charAt(Math.floor(Math.random() * lowercase.length)),
+                        numbers.charAt(Math.floor(Math.random() * numbers.length)),
+                        this.specialChars.charAt(Math.floor(Math.random() * this.specialChars.length)),
+                    ];
+                    while (chars.length < 8) {
+                        chars.push(pool.charAt(Math.floor(Math.random() * pool.length)));
                     }
-                    let newPassword = '';
-                    for (let i = 0; i < 8; i++) {
-                        newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+                    for (let i = chars.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [chars[i], chars[j]] = [chars[j], chars[i]];
                     }
-                    if (this.requireSpecialChar && !/[^a-zA-Z0-9]/.test(newPassword)) {
-                        const pos = Math.floor(Math.random() * 8);
-                        const specialChar = this.specialChars.charAt(Math.floor(Math.random() * this.specialChars.length));
-                        newPassword = newPassword.substring(0, pos) + specialChar + newPassword.substring(pos + 1);
-                    }
-                    return newPassword;
+                    return chars.join('');
                 },
                 validatePassword(value) {
-                    if (!value || value.length < 6) {
-                        return 'Mật khẩu phải có ít nhất 6 ký tự';
+                    if (!value || value.length < 8) {
+                        return 'Mật khẩu phải có ít nhất 8 ký tự';
                     }
-                    if (this.requireSpecialChar && !/[^a-zA-Z0-9]/.test(value)) {
+                    if (!/[^a-zA-Z0-9]/.test(value)) {
                         return 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt';
+                    }
+                    if (!/\d/.test(value)) {
+                        return 'Mật khẩu phải có ít nhất 1 số';
+                    }
+                    if (!/[A-Z]/.test(value)) {
+                        return 'Mật khẩu phải có ít nhất 1 chữ hoa';
+                    }
+                    if (!/[a-z]/.test(value)) {
+                        return 'Mật khẩu phải có ít nhất 1 chữ thường';
                     }
                     return '';
                 },
@@ -352,9 +373,7 @@
             </div>
             <p class="text-xs text-purple-600 mt-1">
                 Mật khẩu giao lưu sẽ được lưu khi bạn duyệt hồ sơ
-                @if(config('profile.password_require_special_char'))
-                    <span class="block">Yêu cầu: ít nhất 1 ký tự đặc biệt</span>
-                @endif
+                <span class="block">Yêu cầu: tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt</span>
             </p>
             <p x-show="exchangePasswordError" x-text="exchangePasswordError" class="text-xs text-red-600 mt-1"></p>
         </div>
